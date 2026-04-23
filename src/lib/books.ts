@@ -196,14 +196,15 @@ export function getTopBooks(limit = 8): Book[] {
 
 export function searchBooks(query: string): Book[] {
     if (!query.trim()) return [];
-    const q = query.toLowerCase();
+    const q = query.toLowerCase().replace(/[-\s]/g, "");
     return getAllBooks().filter(
         (b) =>
             b.title.toLowerCase().includes(q) ||
             b.authors.toLowerCase().includes(q) ||
             b.description.toLowerCase().includes(q) ||
             b.subject.toLowerCase().includes(q) ||
-            b.category.toLowerCase().includes(q)
+            b.category.toLowerCase().includes(q) ||
+            b.sku.replace(/[-\s]/g, "").toLowerCase().includes(q)
     );
 }
 

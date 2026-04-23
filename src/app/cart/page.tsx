@@ -222,9 +222,12 @@ export default function CartPage() {
                                 )}
                             </div>
 
-                            <button className="w-full bg-primary hover:bg-primary-dark text-white py-3.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2">
+                            <Link
+                                href="/checkout"
+                                className="w-full bg-primary hover:bg-primary-dark text-white py-3.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                            >
                                 Proceed to Checkout <ArrowRight className="w-4 h-4" />
-                            </button>
+                            </Link>
 
                             <p className="text-xs text-gray-400 text-center mt-3">
                                 🔒 Secure checkout. 30-day returns.
