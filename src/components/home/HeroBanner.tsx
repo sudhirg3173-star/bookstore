@@ -10,7 +10,7 @@ const slides = [
         id: 1,
         badge: "NEW RELEASE",
         headline: "Bestselling\n Books",
-        subtext: "Over 120,000 trusted reviews",
+        subtext: "Over 100,000 trusted reviews",
         cta: "Shop Now",
         href: "/shop",
         gradient: "from-[#0f0c29] via-[#302b63] to-[#24243e]",
