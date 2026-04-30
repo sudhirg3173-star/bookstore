@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const standard = getStandardBySlug(params.standardSlug);
     if (!standard) return { title: "Standard Not Found" };
     return {
-        title: `${standard.name} — Kabadwalbook`,
+        title: `${standard.name} — Kabdwalbook`,
         description: standard.description,
     };
 }

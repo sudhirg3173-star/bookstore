@@ -12,9 +12,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
     const book = getBookBySku(params.slug);
-    if (!book) return { title: "Book Not Found — Kabadwalbook" };
+    if (!book) return { title: "Book Not Found — Kabdwalbook" };
     return {
-        title: `${book.title} — Kabadwalbook`,
+        title: `${book.title} — Kabdwalbook`,
         description: book.description.slice(0, 160),
     };
 }

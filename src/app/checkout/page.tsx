@@ -19,8 +19,9 @@ import {
     Loader2,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
-import { formatPrice, getBookUrl } from "@/lib/utils";
+import { getBookUrl } from "@/lib/utils";
 import { CreatePaymentRequestResponse } from "@/types/payment";
+import { useCurrencyStore, useFormatPrice } from "@/store/currencyStore";
 
 // Extend window with Instamojo global
 declare global {
@@ -63,6 +64,7 @@ interface BillingForm {
 export default function CheckoutPage() {
     const router = useRouter();
     const { items, getTotal, clearCart } = useCartStore();
+    const format = useFormatPrice();
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -141,7 +143,7 @@ export default function CheckoutPage() {
         const purpose =
             items.length === 1
                 ? `Order: ${items[0].book.title}`
-                : `Order: ${items.length} books from Kabadwalbook`;
+                : `Order: ${items.length} books from Kabdwalbook`;
 
         try {
             const res = await fetch("/api/payment/create-request", {
@@ -439,7 +441,7 @@ export default function CheckoutPage() {
                                                     </p>
                                                 </div>
                                                 <span className="text-xs font-bold text-primary whitespace-nowrap">
-                                                    {formatPrice(unitPrice * item.quantity)}
+                                                    {format(unitPrice * item.quantity)}
                                                 </span>
                                             </div>
                                         );
@@ -450,17 +452,17 @@ export default function CheckoutPage() {
                                 <div className="border-t border-gray-100 pt-4 space-y-2 text-sm">
                                     <div className="flex justify-between text-gray-600">
                                         <span>Subtotal</span>
-                                        <span>{formatPrice(total)}</span>
+                                        <span>{format(total)}</span>
                                     </div>
                                     <div className="flex justify-between text-gray-600">
                                         <span>Shipping</span>
                                         <span className={shipping === 0 ? "text-green-600 font-medium" : ""}>
-                                            {shipping === 0 ? "Free" : formatPrice(shipping)}
+                                            {shipping === 0 ? "Free" : format(shipping)}
                                         </span>
                                     </div>
                                     <div className="flex justify-between font-bold text-gray-900 text-base pt-2 border-t border-gray-100">
                                         <span>Total</span>
-                                        <span className="text-primary">{formatPrice(grandTotal)}</span>
+                                        <span className="text-primary">{format(grandTotal)}</span>
                                     </div>
                                 </div>
 
@@ -486,7 +488,7 @@ export default function CheckoutPage() {
                                     ) : (
                                         <>
                                             <Lock className="w-4 h-4" />
-                                            Pay {formatPrice(grandTotal)} with Instamojo
+                                            Pay {format(grandTotal)} with Instamojo
                                         </>
                                     )}
                                 </button>

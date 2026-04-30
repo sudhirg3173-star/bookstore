@@ -5,7 +5,7 @@ import Footer from "@/components/layout/Footer";
 import { getSubjects } from "@/lib/books";
 
 export const metadata: Metadata = {
-    title: "Kabadwalbook — Your World of Books",
+    title: "Kabdwalbook — Your World of Books",
     description:
         "Discover thousands of books across technology, civil services, management, and more. Best prices on academic and professional books.",
     keywords: "books, academic books, UPSC, technology books, online bookstore",

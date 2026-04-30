@@ -11,7 +11,7 @@ interface TopBooksSectionProps {
 
 export default function TopBooksSection({
     books,
-    title = "Kabadwalbook Top Books",
+    title = "Kabdwalbook Top Books",
     subtitle = "Our Bestsellers",
     viewAllHref = "/shop",
 }: TopBooksSectionProps) {

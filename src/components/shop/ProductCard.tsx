@@ -8,8 +8,9 @@ import { Book } from "@/types/book";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import StarRating from "@/components/ui/StarRating";
-import { formatPrice, truncate, getBookUrl } from "@/lib/utils";
+import { truncate, getBookUrl } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { useCurrencyStore, useFormatPrice } from "@/store/currencyStore";
 
 interface ProductCardProps {
     book: Book;
@@ -23,6 +24,7 @@ export default function ProductCard({ book, className }: ProductCardProps) {
     const addToCart = useCartStore((s) => s.addItem);
     const toggleWishlist = useWishlistStore((s) => s.toggleItem);
     const isWishlisted = useWishlistStore((s) => s.hasItem(book.sku));
+    const format = useFormatPrice();
 
     const discountedPrice = book.discount
         ? book.price * (1 - book.discount / 100)
@@ -137,15 +139,15 @@ export default function ProductCard({ book, className }: ProductCardProps) {
                     {discountedPrice ? (
                         <>
                             <span className="text-primary font-bold text-sm">
-                                {formatPrice(discountedPrice)}
+                                {format(discountedPrice)}
                             </span>
                             <span className="text-gray-400 line-through text-xs">
-                                {formatPrice(book.price)}
+                                {format(book.price)}
                             </span>
                         </>
                     ) : (
                         <span className="text-primary font-bold text-sm">
-                            {formatPrice(book.price)}
+                            {format(book.price)}
                         </span>
                     )}
                 </div>

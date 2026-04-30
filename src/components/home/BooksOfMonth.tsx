@@ -5,9 +5,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart, Heart } from "lucide-react";
 import { Book } from "@/types/book";
-import { formatPrice } from "@/lib/utils";
 import StarRating from "@/components/ui/StarRating";
 import { useCartStore } from "@/store/cartStore";
+import { useCurrencyStore, useFormatPrice } from "@/store/currencyStore";
 
 interface BooksOfMonthProps {
     books: Book[];
@@ -56,6 +56,7 @@ function Countdown() {
 
 export default function BooksOfMonth({ books }: BooksOfMonthProps) {
     const addToCart = useCartStore((s) => s.addItem);
+    const format = useFormatPrice();
 
     return (
         <section className="py-14 bg-white">
@@ -132,15 +133,15 @@ export default function BooksOfMonth({ books }: BooksOfMonthProps) {
                                             {discounted ? (
                                                 <>
                                                     <span className="text-amber-400 font-bold text-lg">
-                                                        {formatPrice(discounted)}
+                                                        {format(discounted)}
                                                     </span>
                                                     <span className="text-white/50 line-through text-sm ml-2">
-                                                        {formatPrice(book.price)}
+                                                        {format(book.price)}
                                                     </span>
                                                 </>
                                             ) : (
                                                 <span className="text-amber-400 font-bold text-lg">
-                                                    {formatPrice(book.price)}
+                                                    {format(book.price)}
                                                 </span>
                                             )}
                                         </div>

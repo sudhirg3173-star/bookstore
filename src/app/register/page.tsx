@@ -68,14 +68,14 @@ export default function RegisterPage() {
                 <Link href="/" className="flex items-center justify-center gap-2 mb-8">
                     <BookOpen className="w-8 h-8 text-primary" />
                     <span className="text-2xl font-extrabold text-white tracking-tight">
-                        Kabadwal<span className="text-primary">book</span>
+                        Kabdwal<span className="text-primary">book</span>
                     </span>
                 </Link>
 
                 <div className="bg-white rounded-2xl shadow-2xl p-8">
                     <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Create an account</h1>
                     <p className="text-sm text-gray-500 mb-6">
-                        Join Kabadwalbook and start exploring
+                        Join Kabdwalbook and start exploring
                     </p>
 
                     {error && (

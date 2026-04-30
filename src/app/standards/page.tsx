@@ -4,7 +4,7 @@ import StandardsGrid from "@/components/standards/StandardsGrid";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-    title: "Standards — Kabadwalbook",
+    title: "Standards — Kabdwalbook",
     description: "Browse official automotive and quality management standards: AIAG APQP, FMEA, IATF 16949, SPC, PPAP, MSA and more.",
 };
 

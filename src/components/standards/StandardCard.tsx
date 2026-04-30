@@ -7,7 +7,7 @@ import { Standard } from "@/types/standard";
 import { standardToBook } from "@/lib/standardUtils";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
-import { formatPrice } from "@/lib/utils";
+import { useCurrencyStore, useFormatPrice } from "@/store/currencyStore";
 import { cn } from "@/lib/utils";
 
 // Deterministic colour per publisher
@@ -31,6 +31,7 @@ export default function StandardCard({ standard, className }: StandardCardProps)
     const book = standardToBook(standard);
 
     const addToCart = useCartStore((s) => s.addItem);
+    const format = useFormatPrice();
     const toggleWishlist = useWishlistStore((s) => s.toggleItem);
     const isWishlisted = useWishlistStore((s) => s.hasItem(book.sku));
 
@@ -121,7 +122,7 @@ export default function StandardCard({ standard, className }: StandardCardProps)
                 <div className="flex items-center justify-between mt-auto">
                     <div className="flex flex-col">
                         <span className="text-base font-extrabold text-gray-900">
-                            {formatPrice(standard.price)}
+                            {format(standard.price)}
                         </span>
                     </div>
                     <button

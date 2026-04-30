@@ -14,8 +14,8 @@ interface Props {
 export async function generateMetadata({ params }: Props) {
     const name = slugToSubject(params.subject);
     return {
-        title: name ? `${name} Books — Kabadwalbook` : "Category — Kabadwalbook",
-        description: `Browse ${name || "our"} books collection on Kabadwalbook.`,
+        title: name ? `${name} Books — Kabdwalbook` : "Category — Kabdwalbook",
+        description: `Browse ${name || "our"} books collection on Kabdwalbook.`,
     };
 }
 

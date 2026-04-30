@@ -26,21 +26,21 @@ export default function HomePage() {
         <>
             <HeroBanner />
             <PromoBanner />
-            <TrendingBooks books={trending} title="Trending on Kabadwalbook" />
+            <TrendingBooks books={trending} title="Trending on Kabdwalbook" />
             <TopCategories />
-            <BooksOfMonth books={booksOfMonth} />
-            <AdventureBanner />
-            <TopBooksSection
+            {/* <BooksOfMonth books={booksOfMonth} /> */}
+            {/* <AdventureBanner /> */}
+            {/* <TopBooksSection
                 books={topBooks}
-                title="Kabadwalbook Top Books"
+                title="Kabdwalbook Top Books"
                 subtitle="Our Bestsellers"
-            />
-            <TopBooksSection
+            /> */}
+            {/* <TopBooksSection
                 books={newReleases}
                 title="Travel the World from Home"
                 subtitle="New Releases"
                 viewAllHref="/category/new-releases"
-            />
+            /> */}
             <TrendingStandards standards={standards} />
             <Testimonials />
         </>

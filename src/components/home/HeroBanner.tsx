@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronRight } from "lucide-react";
 
 const slides = [
     {
         id: 1,
         badge: "NEW RELEASE",
-        headline: "Bestselling\nFiction Books",
+        headline: "Bestselling\n Books",
         subtext: "Over 120,000 trusted reviews",
         cta: "Shop Now",
         href: "/shop",
@@ -23,9 +24,10 @@ const slides = [
         subtext: "Be the first to own new titles",
         cta: "Pre-Order Now",
         href: "/shop?sort=new",
-        gradient: "from-[#1a0533] via-[#6b0f1a] to-[#b91c1c]",
+        gradient: "from-[#02114F] via-[#041B80] to-[#0524A3]",
         accent: "text-orange-300",
-        bookEmoji: "🆕",
+        bookEmoji: "",
+        image: "/images/banner/banner2.png",
     },
     {
         id: 3,
@@ -34,7 +36,7 @@ const slides = [
         subtext: "Handpicked by our editorial team",
         cta: "Explore Now",
         href: "/shop?sort=rating",
-        gradient: "from-[#0a2e1f] via-[#064e3b] to-[#115e59]",
+        gradient: "from-[#57023D] via-[#82045C] to-[#C40465]",
         accent: "text-emerald-300",
         bookEmoji: "⭐",
     },
@@ -55,12 +57,27 @@ export default function HeroBanner() {
     return (
         <section className="relative overflow-hidden">
             <div
-                className={`bg-gradient-to-br ${slide.gradient} transition-all duration-700 ease-in-out`}
+                className={`bg-gradient-to-br ${slide.gradient} transition-all duration-700 ease-in-out relative`}
                 style={{ minHeight: "480px" }}
             >
+                {/* Full-size banner image positioned in outer container */}
+                {slide.image && (
+                    <div className="absolute inset-y-0 right-8 hidden md:flex items-center pointer-events-none">
+                        <Image
+                            src={slide.image}
+                            alt={slide.headline.replace("\n", " ")}
+                            width={0}
+                            height={0}
+                            sizes="50vw"
+                            className="w-auto h-full object-contain drop-shadow-2xl"
+                            priority
+                        />
+                    </div>
+                )}
+
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 flex flex-col md:flex-row items-center justify-between gap-10">
                     {/* Text */}
-                    <div className="text-white max-w-xl animate-fade-in">
+                    <div className="text-white max-w-xl animate-fade-in relative z-10">
                         <span
                             className={`inline-block px-3 py-1 rounded-full text-xs font-bold tracking-widest mb-4 bg-white/20 ${slide.accent}`}
                         >
@@ -79,16 +96,18 @@ export default function HeroBanner() {
                         </Link>
                     </div>
 
-                    {/* Decorative book stack */}
-                    <div className="hidden md:flex items-center justify-center relative">
-                        <div className="w-56 h-56 rounded-full bg-white/10 blur-3xl absolute" />
-                        <span
-                            className="text-9xl drop-shadow-2xl relative"
-                            style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.4))" }}
-                        >
-                            {slide.bookEmoji}
-                        </span>
-                    </div>
+                    {/* Decorative emoji (only for slides without an image) */}
+                    {!slide.image && (
+                        <div className="hidden md:flex items-center justify-center relative">
+                            <div className="w-56 h-56 rounded-full bg-white/10 blur-3xl absolute" />
+                            <span
+                                className="text-9xl drop-shadow-2xl relative"
+                                style={{ filter: "drop-shadow(0 20px 40px rgba(0,0,0,0.4))" }}
+                            >
+                                {slide.bookEmoji}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Dots */}
@@ -98,8 +117,8 @@ export default function HeroBanner() {
                             key={i}
                             onClick={() => setCurrent(i)}
                             className={`rounded-full transition-all duration-300 ${i === current
-                                    ? "w-6 h-2 bg-primary"
-                                    : "w-2 h-2 bg-white/40 hover:bg-white/60"
+                                ? "w-6 h-2 bg-primary"
+                                : "w-2 h-2 bg-white/40 hover:bg-white/60"
                                 }`}
                             aria-label={`Go to slide ${i + 1}`}
                         />

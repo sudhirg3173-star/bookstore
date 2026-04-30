@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
     Search, ShoppingCart, Heart, User, Menu, X, ChevronDown,
-    BookOpen, LogOut, Settings, PenLine, Store, ShoppingBag,
+    LogOut, PenLine, Store, ShoppingBag,
 } from "lucide-react";
+import Image from "next/image";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
+import CurrencySelector from "@/components/layout/CurrencySelector";
 
 const roleIcon: Record<string, React.ReactNode> = {
     buyer: <ShoppingBag className="w-3.5 h-3.5" />,
@@ -72,42 +74,40 @@ export default function Header({ subjects }: { subjects: string[] }) {
     return (
         <header className="sticky top-0 z-50 shadow-md">
             {/* Top bar */}
-            <div className="bg-brand text-white py-2 text-center text-xs tracking-wide hidden md:block">
+            {/* <div className="bg-brand text-white py-2 text-center text-xs tracking-wide hidden md:block">
                 USE CODE:{" "}
                 <span className="font-bold text-amber-400">KWB20</span> FOR 20% OFF
-            </div>
+            </div> */}
 
             {/* Main navbar */}
-            <nav className="bg-[#1a1c2e] text-white">
+            <nav className="bg-[#fa8128] text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between h-16">
                         {/* Logo */}
-                        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-                            <BookOpen className="w-7 h-7 text-primary" />
-                            <span className="text-xl font-bold tracking-tight">
-                                Kabadwal<span className="text-primary">book</span>
-                            </span>
+                        <Link href="/" className="flex items-center flex-shrink-0">
+                            <Image
+                                src="/images/logo/logo.png"
+                                alt="KBI International"
+                                width={120}
+                                height={48}
+                                className="h-12 w-auto object-contain"
+                                priority
+                            />
                         </Link>
 
                         {/* Desktop nav links */}
-                        <div className="hidden lg:flex items-center gap-8">
+                        <div className="hidden md:flex items-center gap-8">
                             <Link href="/" className="text-sm font-medium hover:text-primary transition-colors">
                                 Home
                             </Link>
-                            <Link href="/shop" className="text-sm font-medium hover:text-primary transition-colors">
-                                Books
-                            </Link>
-                            <Link href="/standards" className="text-sm font-medium hover:text-primary transition-colors">
-                                Standards
-                            </Link>
-                            {/* Categories dropdown */}
+                            {/* Books dropdown */}
                             <div className="relative">
                                 <button
                                     className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors"
                                     onClick={() => setCategoryOpen(!categoryOpen)}
                                     onBlur={() => setTimeout(() => setCategoryOpen(false), 150)}
                                 >
-                                    Categories <ChevronDown className="w-3.5 h-3.5" />
+                                    Books <ChevronDown className="w-3.5 h-3.5" />
                                 </button>
                                 {categoryOpen && (
                                     <div className="absolute top-full left-0 mt-2 w-60 bg-white text-gray-800 rounded-lg shadow-xl py-2 animate-slide-down z-50">
@@ -133,13 +133,27 @@ export default function Header({ subjects }: { subjects: string[] }) {
                                     </div>
                                 )}
                             </div>
+                            <Link href="/standards" className="text-sm font-medium hover:text-primary transition-colors">
+                                Standards
+                            </Link>
                             <Link href="/shop?sort=new" className="text-sm font-medium hover:text-primary transition-colors">
                                 New Releases
                             </Link>
+                            <a
+                                href="https://www.kbipublishers.com/"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-medium hover:text-primary transition-colors"
+                            >
+                                Our Books
+                            </a>
                         </div>
 
                         {/* Right icons */}
                         <div className="flex items-center gap-2">
+                            {/* Currency selector */}
+                            <CurrencySelector />
+
                             {/* Search toggle */}
                             <button
                                 onClick={() => setSearchOpen(!searchOpen)}
@@ -255,7 +269,7 @@ export default function Header({ subjects }: { subjects: string[] }) {
 
                             {/* Mobile hamburger */}
                             <button
-                                className="p-2 lg:hidden hover:text-primary transition-colors"
+                                className="p-2 md:hidden hover:text-primary transition-colors"
                                 onClick={() => setMobileOpen(!mobileOpen)}
                                 aria-label="Menu"
                             >
@@ -301,7 +315,7 @@ export default function Header({ subjects }: { subjects: string[] }) {
 
                 {/* Mobile menu */}
                 {mobileOpen && (
-                    <div className="lg:hidden bg-[#252842] border-t border-white/10 animate-slide-down">
+                    <div className="md:hidden bg-[#fa8128] border-t border-white/10 animate-slide-down">
                         <div className="px-4 py-4 space-y-1">
                             {/* Mobile user area */}
                             {mounted && isAuthenticated && user ? (

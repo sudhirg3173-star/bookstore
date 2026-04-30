@@ -3,7 +3,7 @@ import Link from "next/link";
 const features = [
     {
         emoji: "📖",
-        title: "Kabadwalbook Press",
+        title: "Kabdwalbook Press",
         desc: "Publish your book with us",
         cta: "Learn more",
         href: "#",
@@ -13,7 +13,7 @@ const features = [
     },
     {
         emoji: "💳",
-        title: "Kabadwalbook Card",
+        title: "Kabdwalbook Card",
         desc: "5% back on all purchases",
         cta: "Learn more",
         href: "#",
@@ -49,7 +49,7 @@ export default function FeaturesSection() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="text-center mb-10">
                     <p className="text-xs font-semibold text-primary uppercase tracking-widest mb-2">
-                        More from Kabadwalbook
+                        More from Kabdwalbook
                     </p>
                     <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900">
                         Wonderful World of Books

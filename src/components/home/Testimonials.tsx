@@ -3,7 +3,7 @@ export default function Testimonials() {
         {
             name: "Priya Sharma",
             role: "UPSC Aspirant",
-            text: "Kabadwalbook has been my go-to for UPSC prep books. The prices are unbeatable and delivery is super fast. Highly recommend to all civil services aspirants!",
+            text: "Kabdwalbook has been my go-to for UPSC prep books. The prices are unbeatable and delivery is super fast. Highly recommend to all civil services aspirants!",
             rating: 5,
             avatar: "PS",
         },

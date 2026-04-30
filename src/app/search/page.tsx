@@ -13,8 +13,8 @@ export function generateMetadata({ searchParams }: Props) {
     const label = searchParams.type === "standards" ? "Standard" : "Book";
     return {
         title: searchParams.q
-            ? `Search: "${searchParams.q}" — Kabadwalbook`
-            : "Search — Kabadwalbook",
+            ? `Search: "${searchParams.q}" — Kabdwalbook`
+            : "Search — Kabdwalbook",
     };
 }
 
@@ -56,8 +56,8 @@ export default function SearchPage({ searchParams }: Props) {
                                     key={t}
                                     href={`/search?q=${encodeURIComponent(query)}${t !== "all" ? `&type=${t}` : ""}`}
                                     className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all ${type === t
-                                            ? "bg-primary text-white"
-                                            : "bg-white/10 text-white/70 hover:bg-white/20"
+                                        ? "bg-primary text-white"
+                                        : "bg-white/10 text-white/70 hover:bg-white/20"
                                         }`}
                                 >
                                     {t === "all" ? "All" : t === "books" ? `Books (${searchBooks(query).length})` : `Standards (${searchStandards(query).length})`}

@@ -50,14 +50,14 @@ export default function LoginPage() {
                 <Link href="/" className="flex items-center justify-center gap-2 mb-8">
                     <BookOpen className="w-8 h-8 text-primary" />
                     <span className="text-2xl font-extrabold text-white tracking-tight">
-                        Kabadwal<span className="text-primary">book</span>
+                        Kabdwal<span className="text-primary">book</span>
                     </span>
                 </Link>
 
                 <div className="bg-white rounded-2xl shadow-2xl p-8">
                     <h1 className="text-2xl font-extrabold text-gray-900 mb-1">Welcome back</h1>
                     <p className="text-sm text-gray-500 mb-7">
-                        Sign in to your Kabadwalbook account
+                        Sign in to your Kabdwalbook account
                     </p>
 
                     {error && (

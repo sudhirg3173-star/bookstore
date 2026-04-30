@@ -5,11 +5,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
-import { formatPrice, getBookUrl } from "@/lib/utils";
+import { getBookUrl } from "@/lib/utils";
+import { useCurrencyStore, useFormatPrice } from "@/store/currencyStore";
 
 export default function CartPage() {
     const { items, removeItem, updateQuantity, clearCart, getTotal, getItemCount } =
         useCartStore();
+    const format = useFormatPrice();
     const [promoCode, setPromoCode] = useState("");
     const [promoApplied, setPromoApplied] = useState(false);
 
@@ -125,11 +127,11 @@ export default function CartPage() {
                                             {/* Price */}
                                             <div className="text-right">
                                                 <div className="font-bold text-primary text-sm">
-                                                    {formatPrice(unitPrice * item.quantity)}
+                                                    {format(unitPrice * item.quantity)}
                                                 </div>
                                                 {discounted && (
                                                     <div className="text-xs text-gray-400 line-through">
-                                                        {formatPrice(item.book.price * item.quantity)}
+                                                        {format(item.book.price * item.quantity)}
                                                     </div>
                                                 )}
                                             </div>
@@ -174,24 +176,24 @@ export default function CartPage() {
                             <div className="space-y-3 text-sm mb-5">
                                 <div className="flex justify-between text-gray-600">
                                     <span>Subtotal ({count} items)</span>
-                                    <span className="font-medium">{formatPrice(total)}</span>
+                                    <span className="font-medium">{format(total)}</span>
                                 </div>
                                 {discount > 0 && (
                                     <div className="flex justify-between text-green-600">
                                         <span>Promo (KWB20)</span>
-                                        <span>−{formatPrice(discount)}</span>
+                                        <span>−{format(discount)}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between text-gray-600">
                                     <span>Shipping</span>
                                     <span className={shipping === 0 ? "text-green-600 font-medium" : ""}>
-                                        {shipping === 0 ? "Free" : formatPrice(shipping)}
+                                        {shipping === 0 ? "Free" : format(shipping)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between font-bold text-gray-900 text-base pt-3 border-t border-gray-100">
                                     <span>Total</span>
                                     <span className="text-primary">
-                                        {formatPrice(finalTotal + shipping)}
+                                        {format(finalTotal + shipping)}
                                     </span>
                                 </div>
                             </div>

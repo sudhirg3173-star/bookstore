@@ -10,7 +10,7 @@ interface TrendingBooksProps {
     title?: string;
 }
 
-export default function TrendingBooks({ books, title = "Trending on Kabadwalbook" }: TrendingBooksProps) {
+export default function TrendingBooks({ books, title = "Trending on Kabdwalbook" }: TrendingBooksProps) {
     const [activeTab, setActiveTab] = useState<"all" | "instock" | "new">("all");
 
     const filtered = books.filter((b) => {
@@ -44,8 +44,8 @@ export default function TrendingBooks({ books, title = "Trending on Kabadwalbook
                                 key={tab.key}
                                 onClick={() => setActiveTab(tab.key)}
                                 className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${activeTab === tab.key
-                                        ? "bg-white text-gray-900 shadow-sm"
-                                        : "text-gray-500 hover:text-gray-700"
+                                    ? "bg-white text-gray-900 shadow-sm"
+                                    : "text-gray-500 hover:text-gray-700"
                                     }`}
                             >
                                 {tab.label}

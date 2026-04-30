@@ -4,7 +4,7 @@ import ProductGrid from "@/components/shop/ProductGrid";
 import ProductGridSkeleton from "@/components/shop/ProductGridSkeleton";
 
 export const metadata = {
-    title: "Shop All Books — Kabadwalbook",
+    title: "Shop All Books — Kabdwalbook",
     description: "Browse our complete collection of academic and professional books.",
 };
 
