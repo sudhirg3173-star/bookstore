@@ -1,4 +1,4 @@
-# Next.js Bookstore
+# bookIO Next.js Bookstore
 
 A full-featured bookstore web app built with **Next.js 14**, powered by the `books-master.csv` database. Replicates the design and functionality of [bookio.wpbingosite.com](https://bookio.wpbingosite.com/).
 
