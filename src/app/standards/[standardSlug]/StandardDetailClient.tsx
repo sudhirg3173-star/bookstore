@@ -10,7 +10,7 @@ import { Standard } from "@/types/standard";
 import { standardToBook } from "@/lib/standardUtils";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/store/currencyStore";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -110,7 +110,7 @@ export default function StandardDetailClient({ standard }: Props) {
                             {/* Price + Actions */}
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2 border-t border-gray-100">
                                 <div>
-                                    <p className="text-3xl font-extrabold text-gray-900">{formatPrice(standard.price)}</p>
+                                    <p className="text-3xl font-extrabold text-gray-900">{formatPrice(standard.price, standard.currency)}</p>
                                     <p className="text-xs text-gray-400 mt-0.5">Official print edition</p>
                                 </div>
                                 <div className="flex items-center gap-3 sm:ml-auto">

@@ -4,6 +4,7 @@ export interface Standard {
     year: number;
     publisher: string;
     price: number;
+    currency: string;     // e.g. "INR", "USD"
     description: string;
     slug: string;         // URL-safe: "apqp-3-2024"
 }

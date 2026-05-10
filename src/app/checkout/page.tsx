@@ -17,11 +17,22 @@ import {
     Hash,
     AlertCircle,
     Loader2,
+    RefreshCw,
+    Info,
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { getBookUrl } from "@/lib/utils";
 import { CreatePaymentRequestResponse } from "@/types/payment";
-import { useCurrencyStore, useFormatPrice } from "@/store/currencyStore";
+import { formatPrice } from "@/store/currencyStore";
+
+/** Convert a price in `fromCurrency` to INR using the rates map (base = INR). */
+function toINR(price: number, fromCurrency: string, rates: Record<string, number>): number {
+    const code = fromCurrency.toUpperCase();
+    if (code === "INR") return price;
+    const rate = rates[code];
+    if (!rate) return price; // unknown currency — keep as-is
+    return price / rate;
+}
 
 // Extend window with Instamojo global
 declare global {
@@ -64,7 +75,6 @@ interface BillingForm {
 export default function CheckoutPage() {
     const router = useRouter();
     const { items, getTotal, clearCart } = useCartStore();
-    const format = useFormatPrice();
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -72,9 +82,36 @@ export default function CheckoutPage() {
     const [fieldErrors, setFieldErrors] = useState<Partial<BillingForm>>({});
     const paymentUrlRef = useRef<string | null>(null);
 
-    const total = getTotal();
-    const shipping = total > 999 ? 0 : 99;
-    const grandTotal = total + shipping;
+    // Live exchange rates (base = INR)
+    const [rates, setRates] = useState<Record<string, number>>({ INR: 1 });
+    const [ratesLoading, setRatesLoading] = useState(true);
+    const [ratesFallback, setRatesFallback] = useState(false);
+
+    useEffect(() => {
+        fetch("/api/exchange-rates")
+            .then((r) => r.json())
+            .then((data) => {
+                if (data.rates) setRates(data.rates);
+                if (data.fallback) setRatesFallback(true);
+            })
+            .catch(() => setRatesFallback(true))
+            .finally(() => setRatesLoading(false));
+    }, []);
+
+    // All monetary values on checkout are in INR
+    const subtotalINR = items.reduce((sum, item) => {
+        const unitPrice = item.book.discount
+            ? item.book.price * (1 - item.book.discount / 100)
+            : item.book.price;
+        return sum + toINR(unitPrice * item.quantity, item.book.currency, rates);
+    }, 0);
+    const shippingINR = subtotalINR > 999 ? 0 : 99;
+    const grandTotalINR = Math.round((subtotalINR + shippingINR) * 100) / 100;
+
+    // Currencies in the cart that need conversion
+    const foreignCurrencies = Array.from(
+        new Set(items.map((i) => i.book.currency.toUpperCase()).filter((c) => c !== "INR"))
+    );
 
     // Redirect if cart is empty
     useEffect(() => {
@@ -150,7 +187,7 @@ export default function CheckoutPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    amount: grandTotal,
+                    amount: grandTotalINR,
                     purpose,
                     buyerName: form.name.trim(),
                     email: form.email.trim(),
@@ -409,6 +446,40 @@ export default function CheckoutPage() {
                                     Order Summary
                                 </h2>
 
+                                {/* Exchange rate notice */}
+                                {ratesLoading ? (
+                                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
+                                        <Loader2 className="w-3 h-3 animate-spin" /> Fetching live exchange rates…
+                                    </div>
+                                ) : (
+                                    <>
+                                        {ratesFallback && (
+                                            <div className="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                                                <RefreshCw className="w-3 h-3 shrink-0" />
+                                                Using approximate rates. Live rates unavailable.
+                                            </div>
+                                        )}
+                                        {foreignCurrencies.length > 0 && (
+                                            <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5 mb-3 text-xs text-blue-700">
+                                                <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                                <div>
+                                                    <p className="font-semibold mb-1">Live exchange rates (to ₹ INR)</p>
+                                                    {foreignCurrencies.map((code) => {
+                                                        const rate = rates[code];
+                                                        const inrPerUnit = rate ? (1 / rate) : null;
+                                                        return (
+                                                            <p key={code}>
+                                                                1 {code} = {inrPerUnit ? `₹ ${inrPerUnit.toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "…"}
+                                                            </p>
+                                                        );
+                                                    })}
+                                                    <p className="text-blue-500 mt-1">All prices converted to INR at checkout.</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
                                 {/* Items */}
                                 <div className="space-y-3 mb-4 max-h-64 overflow-y-auto pr-1">
                                     {items.map((item) => {
@@ -416,6 +487,9 @@ export default function CheckoutPage() {
                                             ? item.book.price * (1 - item.book.discount / 100)
                                             : null;
                                         const unitPrice = discounted ?? item.book.price;
+                                        const lineOriginal = unitPrice * item.quantity;
+                                        const lineINR = toINR(lineOriginal, item.book.currency, rates);
+                                        const isNonINR = item.book.currency.toUpperCase() !== "INR";
 
                                         return (
                                             <div key={item.book.sku} className="flex gap-3 items-start">
@@ -439,30 +513,35 @@ export default function CheckoutPage() {
                                                     <p className="text-xs text-gray-400">
                                                         Qty: {item.quantity}
                                                     </p>
+                                                    {isNonINR && (
+                                                        <p className="text-[10px] text-gray-400">
+                                                            {formatPrice(lineOriginal, item.book.currency)}
+                                                        </p>
+                                                    )}
                                                 </div>
                                                 <span className="text-xs font-bold text-primary whitespace-nowrap">
-                                                    {format(unitPrice * item.quantity)}
+                                                    {formatPrice(lineINR, "INR")}
                                                 </span>
                                             </div>
                                         );
                                     })}
                                 </div>
 
-                                {/* Totals */}
+                                {/* Totals — all in INR */}
                                 <div className="border-t border-gray-100 pt-4 space-y-2 text-sm">
                                     <div className="flex justify-between text-gray-600">
                                         <span>Subtotal</span>
-                                        <span>{format(total)}</span>
+                                        <span>{formatPrice(subtotalINR, "INR")}</span>
                                     </div>
                                     <div className="flex justify-between text-gray-600">
                                         <span>Shipping</span>
-                                        <span className={shipping === 0 ? "text-green-600 font-medium" : ""}>
-                                            {shipping === 0 ? "Free" : format(shipping)}
+                                        <span className={shippingINR === 0 ? "text-green-600 font-medium" : ""}>
+                                            {shippingINR === 0 ? "Free" : formatPrice(shippingINR, "INR")}
                                         </span>
                                     </div>
                                     <div className="flex justify-between font-bold text-gray-900 text-base pt-2 border-t border-gray-100">
-                                        <span>Total</span>
-                                        <span className="text-primary">{format(grandTotal)}</span>
+                                        <span>Total (INR)</span>
+                                        <span className="text-primary">{formatPrice(grandTotalINR, "INR")}</span>
                                     </div>
                                 </div>
 
@@ -477,7 +556,7 @@ export default function CheckoutPage() {
                                 {/* Pay button */}
                                 <button
                                     onClick={handlePayNow}
-                                    disabled={isProcessing}
+                                    disabled={isProcessing || ratesLoading}
                                     className="mt-5 w-full bg-primary hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
                                 >
                                     {isProcessing ? (
@@ -488,7 +567,7 @@ export default function CheckoutPage() {
                                     ) : (
                                         <>
                                             <Lock className="w-4 h-4" />
-                                            Pay {format(grandTotal)} with Instamojo
+                                            Pay {formatPrice(grandTotalINR, "INR")} with Instamojo
                                         </>
                                     )}
                                 </button>

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ShoppingCart, Heart, Share2, Star, Package, BookOpen, Calendar } from "lucide-react";
 import { Book } from "@/types/book";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice } from "@/store/currencyStore";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import StarRating from "@/components/ui/StarRating";
@@ -110,10 +110,10 @@ export default function ProductDetailClient({
                             {discounted ? (
                                 <>
                                     <span className="text-3xl font-extrabold text-primary">
-                                        {formatPrice(discounted)}
+                                        {formatPrice(discounted, book.currency)}
                                     </span>
                                     <span className="text-lg text-gray-400 line-through">
-                                        {formatPrice(book.price)}
+                                        {formatPrice(book.price, book.currency)}
                                     </span>
                                     <span className="text-sm bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">
                                         Save {book.discount}%
@@ -121,7 +121,7 @@ export default function ProductDetailClient({
                                 </>
                             ) : (
                                 <span className="text-3xl font-extrabold text-primary">
-                                    {formatPrice(book.price)}
+                                    {formatPrice(book.price, book.currency)}
                                 </span>
                             )}
                         </div>
@@ -133,8 +133,8 @@ export default function ProductDetailClient({
                                 <p className="text-xs text-gray-500">Status</p>
                                 <p
                                     className={`text-xs font-semibold mt-0.5 ${book.availability === "In Stock"
-                                            ? "text-green-600"
-                                            : "text-red-500"
+                                        ? "text-green-600"
+                                        : "text-red-500"
                                         }`}
                                 >
                                     {book.availability}
@@ -179,8 +179,8 @@ export default function ProductDetailClient({
                                 <button
                                     onClick={handleAddToCart}
                                     className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold transition-all ${added
-                                            ? "bg-green-500 text-white"
-                                            : "bg-primary hover:bg-primary-dark text-white"
+                                        ? "bg-green-500 text-white"
+                                        : "bg-primary hover:bg-primary-dark text-white"
                                         }`}
                                 >
                                     <ShoppingCart className="w-4 h-4" />
@@ -198,8 +198,8 @@ export default function ProductDetailClient({
                             <button
                                 onClick={() => toggleWishlist(book)}
                                 className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all ${isWishlisted
-                                        ? "bg-red-50 border-primary text-primary"
-                                        : "border-gray-200 text-gray-600 hover:border-primary hover:text-primary"
+                                    ? "bg-red-50 border-primary text-primary"
+                                    : "border-gray-200 text-gray-600 hover:border-primary hover:text-primary"
                                     }`}
                             >
                                 <Heart
@@ -229,8 +229,8 @@ export default function ProductDetailClient({
                             key={tab.key}
                             onClick={() => setActiveTab(tab.key)}
                             className={`flex-1 py-4 text-sm font-semibold transition-all ${activeTab === tab.key
-                                    ? "border-b-2 border-primary text-primary"
-                                    : "text-gray-500 hover:text-gray-800"
+                                ? "border-b-2 border-primary text-primary"
+                                : "text-gray-500 hover:text-gray-800"
                                 }`}
                         >
                             {tab.label}

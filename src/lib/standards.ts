@@ -46,6 +46,10 @@ export function standardSlug(number: string): string {
 // ── Module cache ─────────────────────────────────────────────────────────────
 let _standards: Standard[] | null = null;
 
+export function invalidateStandardsCache(): void {
+    _standards = null;
+}
+
 export function getAllStandards(): Standard[] {
     if (_standards) return _standards;
     try {
@@ -53,8 +57,10 @@ export function getAllStandards(): Standard[] {
         const content = fs.readFileSync(csvPath, "utf-8");
         const rows = parseCSV(content);
         _standards = rows.map((row) => {
-            // Price field looks like "$ 177" or " $ 177"
             const rawPrice = row["price"] || "0";
+            // Extract currency code from price string, e.g. "INR 16,799.16" → "INR"
+            const currencyMatch = rawPrice.match(/^([A-Z]{2,4})\s*/i);
+            const currency = currencyMatch ? currencyMatch[1].toUpperCase() : "INR";
             const price = parseFloat(rawPrice.replace(/[^0-9.]/g, "")) || 0;
             const number = row["standard_number"] || row["standard_number_"] || Object.values(row)[0] || "";
             return {
@@ -63,6 +69,7 @@ export function getAllStandards(): Standard[] {
                 year: parseInt(row["year"] || "0", 10),
                 publisher: row["publisher"] || "",
                 price,
+                currency,
                 description: row["description"] || "",
                 slug: standardSlug(number),
             } as Standard;

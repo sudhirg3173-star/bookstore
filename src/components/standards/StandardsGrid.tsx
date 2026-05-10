@@ -7,7 +7,7 @@ import { LayoutGrid, List, SlidersHorizontal, X, FileText, ShoppingCart } from "
 import { standardToBook } from "@/lib/standardUtils";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
-import { useCurrencyStore, useFormatPrice } from "@/store/currencyStore";
+import { formatPrice } from "@/store/currencyStore";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
@@ -22,7 +22,6 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const addToCart = useCartStore((s) => s.addItem);
-    const format = useFormatPrice();
     const toggleWishlist = useWishlistStore((s) => s.toggleItem);
 
     const publishers = useMemo(() => {
@@ -172,7 +171,7 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
                                     </div>
                                     {/* Price + Cart */}
                                     <div className="flex flex-col items-end justify-between flex-shrink-0 gap-2">
-                                        <span className="text-base font-extrabold text-gray-900">{format(s.price)}</span>
+                                        <span className="text-base font-extrabold text-gray-900">{formatPrice(s.price, s.currency)}</span>
                                         <button
                                             onClick={(e) => { e.preventDefault(); addToCart(book); }}
                                             className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-semibold hover:bg-primary-dark transition-colors"

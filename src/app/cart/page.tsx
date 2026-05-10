@@ -1,25 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from "lucide-react";
+import { Trash2, Plus, Minus, ShoppingBag, ArrowRight, Info } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { getBookUrl } from "@/lib/utils";
-import { useCurrencyStore, useFormatPrice } from "@/store/currencyStore";
+import { formatPrice } from "@/store/currencyStore";
+
+/** Convert a price in `fromCurrency` to INR using rates map (base = INR). */
+function toINR(price: number, fromCurrency: string, rates: Record<string, number>): number {
+    const code = fromCurrency.toUpperCase();
+    if (code === "INR") return price;
+    const rate = rates[code];
+    return rate ? price / rate : price;
+}
 
 export default function CartPage() {
     const { items, removeItem, updateQuantity, clearCart, getTotal, getItemCount } =
         useCartStore();
-    const format = useFormatPrice();
     const [promoCode, setPromoCode] = useState("");
     const [promoApplied, setPromoApplied] = useState(false);
 
-    const total = getTotal();
+    // Live exchange rates (base = INR)
+    const [rates, setRates] = useState<Record<string, number>>({ INR: 1 });
+    useEffect(() => {
+        fetch("/api/exchange-rates")
+            .then((r) => r.json())
+            .then((d) => { if (d.rates) setRates(d.rates); })
+            .catch(() => { /* use default rates */ });
+    }, []);
+
     const count = getItemCount();
-    const discount = promoApplied ? total * 0.2 : 0;
-    const finalTotal = total - discount;
-    const shipping = finalTotal > 999 ? 0 : 99;
+
+    // Subtotal in INR
+    const subtotalINR = items.reduce((sum, item) => {
+        const unitPrice = item.book.discount
+            ? item.book.price * (1 - item.book.discount / 100)
+            : item.book.price;
+        return sum + toINR(unitPrice * item.quantity, item.book.currency, rates);
+    }, 0);
+
+    const discountINR = promoApplied ? subtotalINR * 0.2 : 0;
+    const afterDiscountINR = subtotalINR - discountINR;
+    const shippingINR = afterDiscountINR > 999 ? 0 : 99;
+    const totalINR = afterDiscountINR + shippingINR;
+
+    // Currencies that need conversion (non-INR items in the cart)
+    const foreignCurrencies = Array.from(
+        new Set(items.map((i) => i.book.currency.toUpperCase()).filter((c) => c !== "INR"))
+    );
 
     const handlePromo = () => {
         if (promoCode.toUpperCase() === "KWB20") {
@@ -127,11 +157,11 @@ export default function CartPage() {
                                             {/* Price */}
                                             <div className="text-right">
                                                 <div className="font-bold text-primary text-sm">
-                                                    {format(unitPrice * item.quantity)}
+                                                    {formatPrice(unitPrice * item.quantity, item.book.currency)}
                                                 </div>
                                                 {discounted && (
                                                     <div className="text-xs text-gray-400 line-through">
-                                                        {format(item.book.price * item.quantity)}
+                                                        {formatPrice(item.book.price * item.quantity, item.book.currency)}
                                                     </div>
                                                 )}
                                             </div>
@@ -173,27 +203,46 @@ export default function CartPage() {
                                 Order Summary
                             </h2>
 
+                            {/* Exchange rate info — only shown when cart has non-INR items */}
+                            {foreignCurrencies.length > 0 && (
+                                <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2.5 mb-4 text-xs text-blue-700">
+                                    <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                                    <div>
+                                        <p className="font-semibold mb-1">Live exchange rates (to ₹ INR)</p>
+                                        {foreignCurrencies.map((code) => {
+                                            const rate = rates[code];
+                                            const inrPerUnit = rate ? (1 / rate) : null;
+                                            return (
+                                                <p key={code}>
+                                                    1 {code} = {inrPerUnit ? `₹ ${inrPerUnit.toLocaleString("en-IN", { maximumFractionDigits: 2 })}` : "…"}
+                                                </p>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="space-y-3 text-sm mb-5">
                                 <div className="flex justify-between text-gray-600">
                                     <span>Subtotal ({count} items)</span>
-                                    <span className="font-medium">{format(total)}</span>
+                                    <span className="font-medium">{formatPrice(subtotalINR, "INR")}</span>
                                 </div>
-                                {discount > 0 && (
+                                {discountINR > 0 && (
                                     <div className="flex justify-between text-green-600">
                                         <span>Promo (KWB20)</span>
-                                        <span>−{format(discount)}</span>
+                                        <span>−{formatPrice(discountINR, "INR")}</span>
                                     </div>
                                 )}
                                 <div className="flex justify-between text-gray-600">
                                     <span>Shipping</span>
-                                    <span className={shipping === 0 ? "text-green-600 font-medium" : ""}>
-                                        {shipping === 0 ? "Free" : format(shipping)}
+                                    <span className={shippingINR === 0 ? "text-green-600 font-medium" : ""}>
+                                        {shippingINR === 0 ? "Free" : formatPrice(shippingINR, "INR")}
                                     </span>
                                 </div>
                                 <div className="flex justify-between font-bold text-gray-900 text-base pt-3 border-t border-gray-100">
                                     <span>Total</span>
                                     <span className="text-primary">
-                                        {format(finalTotal + shipping)}
+                                        {formatPrice(totalINR, "INR")}
                                     </span>
                                 </div>
                             </div>

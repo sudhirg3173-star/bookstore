@@ -15,6 +15,7 @@ export function standardToBook(s: Standard): Book {
         authors: s.publisher,
         sku: "std-" + s.slug,
         price: s.price,
+        currency: s.currency,
         availability: "In Stock",
         pages: 0,
         publicationYear: s.year,

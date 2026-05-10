@@ -29,10 +29,41 @@ function parseCSVLine(line: string): string[] {
 }
 
 function parseCSV(content: string): Record<string, string>[] {
-    const lines = content.split(/\r?\n/).filter((line) => line.trim());
-    if (lines.length < 2) return [];
+    // Character-level parse — correctly handles quoted fields with embedded newlines
+    const allRows: string[][] = [];
+    let currentRow: string[] = [];
+    let field = "";
+    let inQuotes = false;
 
-    const rawHeaders = parseCSVLine(lines[0]);
+    for (let i = 0; i < content.length; i++) {
+        const ch = content[i];
+        const next = content[i + 1];
+        if (inQuotes) {
+            if (ch === '"' && next === '"') { field += '"'; i++; }
+            else if (ch === '"') { inQuotes = false; }
+            else { field += ch; }
+        } else {
+            if (ch === '"') { inQuotes = true; }
+            else if (ch === ',') { currentRow.push(field.trim()); field = ""; }
+            else if (ch === '\r' && next === '\n') {
+                currentRow.push(field.trim()); field = "";
+                if (currentRow.some((v) => v.trim())) allRows.push(currentRow);
+                currentRow = []; i++;
+            } else if (ch === '\n') {
+                currentRow.push(field.trim()); field = "";
+                if (currentRow.some((v) => v.trim())) allRows.push(currentRow);
+                currentRow = [];
+            } else { field += ch; }
+        }
+    }
+    if (currentRow.length > 0 || field) {
+        currentRow.push(field.trim());
+        if (currentRow.some((v) => v.trim())) allRows.push(currentRow);
+    }
+
+    if (allRows.length < 2) return [];
+
+    const rawHeaders = allRows[0];
     const headers = rawHeaders.map((h) =>
         h
             .toLowerCase()
@@ -40,20 +71,23 @@ function parseCSV(content: string): Record<string, string>[] {
             .replace(/_+/g, "_")
     );
 
-    return lines
+    return allRows
         .slice(1)
-        .map((line) => {
-            const values = parseCSVLine(line);
+        .map((values) => {
             const obj: Record<string, string> = {};
             headers.forEach((header, i) => {
                 obj[header] = values[i] || "";
             });
             return obj;
         })
-        .filter((row) => row[headers[0]]);
+        .filter((row) => Object.values(row).some((v) => v.trim()));
 }
 
 let _books: Book[] | null = null;
+
+export function invalidateBooksCache(): void {
+    _books = null;
+}
 
 function resolveCsvPath(): string {
     const candidates = [
@@ -82,9 +116,9 @@ export function getAllBooks(): Book[] {
             const rawIsbn = row["isbn"] || row["sku"] || row["s_k_u"] || "";
             const sku = /^\d{13}$/.test(isbnFromImg) ? isbnFromImg : rawIsbn;
             const title = row["title"] || "";
-            // Price may have "INR " prefix — strip it
+            // Price is now a plain number in the CSV
             const rawPrice = row["price"] || "0";
-            const price = parseFloat(rawPrice.replace(/INR\s*/i, "").replace(/,/g, "")) || 0;
+            const price = parseFloat(rawPrice.replace(/[^\d.]/g, "")) || 0;
             const rating = getBookRating(sku);
             const reviewCount = getReviewCount(sku);
             const discount = getDiscount(sku);
@@ -95,6 +129,7 @@ export function getAllBooks(): Book[] {
                 authors: row["author"] || row["authors"] || "",
                 sku,
                 price,
+                currency: row["currency"] || "INR",
                 availability: row["availability"] === "Out of Stock" ? "Out of Stock" : "In Stock",
                 pages: parseInt(row["pages"] || "0", 10),
                 publicationYear: parseInt(row["publication_year"] || "0", 10),
@@ -197,13 +232,14 @@ export function getTopBooks(limit = 8): Book[] {
 export function searchBooks(query: string): Book[] {
     if (!query.trim()) return [];
     const q = query.toLowerCase().replace(/[-\s]/g, "");
+    const normalize = (s: string) => s.toLowerCase().replace(/[-\s]/g, "");
     return getAllBooks().filter(
         (b) =>
-            b.title.toLowerCase().includes(q) ||
-            b.authors.toLowerCase().includes(q) ||
-            b.description.toLowerCase().includes(q) ||
-            b.subject.toLowerCase().includes(q) ||
-            b.category.toLowerCase().includes(q) ||
+            normalize(b.title).includes(q) ||
+            normalize(b.authors).includes(q) ||
+            normalize(b.description).includes(q) ||
+            normalize(b.subject).includes(q) ||
+            normalize(b.category).includes(q) ||
             b.sku.replace(/[-\s]/g, "").toLowerCase().includes(q)
     );
 }

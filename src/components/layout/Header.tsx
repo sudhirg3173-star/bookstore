@@ -12,7 +12,6 @@ import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { useAuthStore } from "@/store/authStore";
 import { cn } from "@/lib/utils";
-import CurrencySelector from "@/components/layout/CurrencySelector";
 
 const roleIcon: Record<string, React.ReactNode> = {
     buyer: <ShoppingBag className="w-3.5 h-3.5" />,
@@ -151,9 +150,6 @@ export default function Header({ subjects }: { subjects: string[] }) {
 
                         {/* Right icons */}
                         <div className="flex items-center gap-2">
-                            {/* Currency selector */}
-                            <CurrencySelector />
-
                             {/* Search toggle */}
                             <button
                                 onClick={() => setSearchOpen(!searchOpen)}

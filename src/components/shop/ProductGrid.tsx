@@ -8,7 +8,7 @@ import ShopSidebar from "@/components/shop/ShopSidebar";
 import { ChevronLeft, ChevronRight, LayoutGrid, List } from "lucide-react";
 import { getBookUrl } from "@/lib/utils";
 import { useCartStore } from "@/store/cartStore";
-import { useCurrencyStore, useFormatPrice } from "@/store/currencyStore";
+import { formatPrice } from "@/store/currencyStore";
 
 interface ProductGridProps {
     books: Book[];
@@ -231,7 +231,6 @@ export default function ProductGrid({
 
 function ListCard({ book }: { book: Book }) {
     const addToCart = useCartStore((s) => s.addItem);
-    const format = useFormatPrice();
     const [added, setAdded] = useState(false);
 
     const discounted = book.discount
@@ -294,11 +293,11 @@ function ListCard({ book }: { book: Book }) {
                 <div className="flex items-center gap-3 mt-2 flex-wrap">
                     <div className="flex items-baseline gap-1.5">
                         <span className="text-primary font-bold text-sm">
-                            {format(discounted ?? book.price)}
+                            {formatPrice(discounted ?? book.price, book.currency)}
                         </span>
                         {discounted && (
                             <span className="text-gray-400 line-through text-xs">
-                                {format(book.price)}
+                                {formatPrice(book.price, book.currency)}
                             </span>
                         )}
                     </div>

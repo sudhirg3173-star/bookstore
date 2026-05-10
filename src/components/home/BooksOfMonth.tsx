@@ -7,7 +7,7 @@ import { ShoppingCart, Heart } from "lucide-react";
 import { Book } from "@/types/book";
 import StarRating from "@/components/ui/StarRating";
 import { useCartStore } from "@/store/cartStore";
-import { useCurrencyStore, useFormatPrice } from "@/store/currencyStore";
+import { formatPrice } from "@/store/currencyStore";
 
 interface BooksOfMonthProps {
     books: Book[];
@@ -56,7 +56,6 @@ function Countdown() {
 
 export default function BooksOfMonth({ books }: BooksOfMonthProps) {
     const addToCart = useCartStore((s) => s.addItem);
-    const format = useFormatPrice();
 
     return (
         <section className="py-14 bg-white">
@@ -133,15 +132,15 @@ export default function BooksOfMonth({ books }: BooksOfMonthProps) {
                                             {discounted ? (
                                                 <>
                                                     <span className="text-amber-400 font-bold text-lg">
-                                                        {format(discounted)}
+                                                        {formatPrice(discounted, book.currency)}
                                                     </span>
                                                     <span className="text-white/50 line-through text-sm ml-2">
-                                                        {format(book.price)}
+                                                        {formatPrice(book.price, book.currency)}
                                                     </span>
                                                 </>
                                             ) : (
                                                 <span className="text-amber-400 font-bold text-lg">
-                                                    {format(book.price)}
+                                                    {formatPrice(book.price, book.currency)}
                                                 </span>
                                             )}
                                         </div>

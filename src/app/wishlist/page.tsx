@@ -5,7 +5,8 @@ import Link from "next/link";
 import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { useCartStore } from "@/store/cartStore";
-import { formatPrice, getBookUrl } from "@/lib/utils";
+import { formatPrice } from "@/store/currencyStore";
+import { getBookUrl } from "@/lib/utils";
 import StarRating from "@/components/ui/StarRating";
 
 export default function WishlistPage() {
@@ -90,11 +91,11 @@ export default function WishlistPage() {
                                     </p>
                                     <div className="flex items-baseline gap-2 mb-3">
                                         <span className="text-primary font-bold text-sm">
-                                            {formatPrice(discounted ?? book.price)}
+                                            {formatPrice(discounted ?? book.price, book.currency)}
                                         </span>
                                         {discounted && (
                                             <span className="text-gray-400 line-through text-xs">
-                                                {formatPrice(book.price)}
+                                                {formatPrice(book.price, book.currency)}
                                             </span>
                                         )}
                                     </div>

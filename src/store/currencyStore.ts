@@ -1,43 +1,21 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-
-export type Currency = "INR" | "USD" | "GBP";
-
-export const CURRENCIES: Record<
-    Currency,
-    { code: Currency; label: string; flag: string; locale: string; rate: number; maxDecimals: number }
-> = {
-    INR: { code: "INR", label: "INR", flag: "🇮🇳", locale: "en-IN", rate: 1, maxDecimals: 0 },
-    USD: { code: "USD", label: "USD", flag: "🇺🇸", locale: "en-US", rate: 0.0119, maxDecimals: 2 },
-    GBP: { code: "GBP", label: "GBP", flag: "🇬🇧", locale: "en-GB", rate: 0.0094, maxDecimals: 2 },
+/** Currency symbol map (extend as needed). */
+const CURRENCY_SYMBOLS: Record<string, string> = {
+    INR: "₹",
+    USD: "$",
+    GBP: "£",
+    EUR: "€",
 };
 
-interface CurrencyStore {
-    currency: Currency;
-    setCurrency: (c: Currency) => void;
-}
-
-export const useCurrencyStore = create<CurrencyStore>()(
-    persist(
-        (set) => ({
-            currency: "INR",
-            setCurrency: (currency) => set({ currency }),
-        }),
-        { name: "bookstore-currency", version: 1 }
-    )
-);
-
 /**
- * Hook that returns a format function reactive to currency changes.
- * Components using this will re-render whenever the currency changes.
+ * Format a numeric price with the correct currency symbol derived from the CSV.
+ * @param price    - Numeric price value
+ * @param currency - ISO 4217 code stored in the CSV (e.g. "INR", "USD")
  */
-export function useFormatPrice() {
-    const currency = useCurrencyStore((s) => s.currency);
-    const { code, locale, rate, maxDecimals } = CURRENCIES[currency];
-    return (inrPrice: number): string =>
-        new Intl.NumberFormat(locale, {
-            style: "currency",
-            currency: code,
-            maximumFractionDigits: maxDecimals,
-        }).format(inrPrice * rate);
+export function formatPrice(price: number, currency: string = "INR"): string {
+    const code = currency.toUpperCase();
+    const symbol = CURRENCY_SYMBOLS[code] ?? code;
+    if (code === "INR") {
+        return `${symbol} ${price.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+    }
+    return `${symbol} ${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }

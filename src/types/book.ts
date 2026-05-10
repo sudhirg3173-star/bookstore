@@ -4,6 +4,7 @@ export interface Book {
     authors: string;
     sku: string;
     price: number;
+    currency: string;
     availability: "In Stock" | "Out of Stock";
     pages: number;
     publicationYear: number;

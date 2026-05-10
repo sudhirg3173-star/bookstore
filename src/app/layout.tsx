@@ -3,6 +3,7 @@ import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { getSubjects } from "@/lib/books";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
     title: "Kabdwalbook — Your World of Books",
@@ -17,12 +18,15 @@ export default async function RootLayout({
     children: React.ReactNode;
 }>) {
     const subjects = getSubjects();
+    const headersList = await headers();
+    const isAdmin = headersList.get("x-is-admin") === "1";
+
     return (
         <html lang="en" suppressHydrationWarning>
             <body className="min-h-screen flex flex-col bg-white">
-                <Header subjects={subjects} />
+                {!isAdmin && <Header subjects={subjects} />}
                 <main className="flex-1">{children}</main>
-                <Footer subjects={subjects} />
+                {!isAdmin && <Footer subjects={subjects} />}
             </body>
         </html>
     );
