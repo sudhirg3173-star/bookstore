@@ -17,6 +17,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const index = parseInt(id, 10);
     try {
         const body: Record<string, string> = await req.json();
+        body["Updated_At"] = new Date().toISOString();
         const { headers, rows } = readCSV(BOOKS_CSV_PATH);
         if (isNaN(index) || index < 0 || index >= rows.length) {
             return NextResponse.json({ error: `Row not found (index ${index}, total ${rows.length})` }, { status: 404 });

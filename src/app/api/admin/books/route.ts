@@ -28,6 +28,7 @@ export function GET() {
 export async function POST(req: NextRequest) {
     try {
         const body: Record<string, string> = await req.json();
+        body["Updated_At"] = new Date().toISOString();
         const { headers, rows } = readCSV(BOOKS_CSV_PATH);
         const merged = mergeHeaders(headers, body);
         // Build a clean row using merged headers

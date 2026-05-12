@@ -6,7 +6,7 @@ import Image from "next/image";
 import {
     Plus, Pencil, Trash2, Search, X, BookOpen, Award,
     ChevronLeft, ChevronRight, Loader2, AlertCircle, CheckCircle2,
-    Upload, ImageIcon, LogOut,
+    Upload, ImageIcon, LogOut, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -34,6 +34,7 @@ const BOOK_LABELS: Record<string, string> = {
     Image_URL: "Image URL",
     Book_URL: "Book URL",
     Description: "Description",
+    Updated_At: "Updated",
 };
 
 const STANDARD_LABELS: Record<string, string> = {
@@ -43,10 +44,27 @@ const STANDARD_LABELS: Record<string, string> = {
     PUBLISHER: "Publisher",
     Price: "Price",
     Description: "Description",
+    Updated_At: "Updated",
 };
 
-const BOOK_TABLE_COLS = ["Title", "Author", "Subject", "Category", "Price", "Publication_Year"];
-const STANDARD_TABLE_COLS = ["Standard Number", "Standard Name", "PUBLISHER", "YEAR", "Price"];
+const BOOK_TABLE_COLS = ["Title", "Author", "Subject", "Category", "Price", "Publication_Year", "Updated_At"];
+const STANDARD_TABLE_COLS = ["Standard Number", "Standard Name", "PUBLISHER", "YEAR", "Price", "Updated_At"];
+
+// Columns that support click-to-sort
+const SORTABLE_BOOK_COLS = new Set(["Title", "Updated_At"]);
+const SORTABLE_STANDARD_COLS = new Set(["Standard Name", "Updated_At"]);
+
+function formatDateTime(iso: string, fallback: string): string {
+    const date = new Date(iso || fallback);
+    try {
+        return date.toLocaleString("en-IN", {
+            day: "2-digit", month: "short", year: "numeric",
+            hour: "2-digit", minute: "2-digit", hour12: true,
+        });
+    } catch {
+        return iso || fallback;
+    }
+}
 
 const PAGE_SIZE = 10;
 
@@ -270,7 +288,7 @@ function Modal({
         return init;
     });
 
-    // Detect the Image_URL column (books have it, standards don't)
+    // Detect the Image_URL column — always present in books; injected for standards
     const imageUrlField = headers.includes("Image_URL") ? "Image_URL" : null;
     const folder = tab === "books" ? "books" : "standards";
 
@@ -310,8 +328,8 @@ function Modal({
                             onUploaded={handleUploaded}
                         />
 
-                        {/* Text / dropdown fields */}
-                        {headers.map((h) => (
+                        {/* Text / dropdown fields (Updated_At is auto-managed, not shown) */}
+                        {headers.filter((h) => h !== "Updated_At").map((h) => (
                             <div key={h}>
                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                                     {labels[h] ?? h}
@@ -407,11 +425,16 @@ function DeleteConfirm({ label, onConfirm, onClose, deleting }: {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function ControlCenterClient() {
+    // Fixed fallback date shown for rows that have no Updated_At saved yet
+    const defaultTimestamp = useRef("2026-05-10T12:00:00.000Z");
+
     const [tab, setTab] = useState<Tab>("books");
     const [data, setData] = useState<ApiResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
+    const [sortCol, setSortCol] = useState<string | null>(null);
+    const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
     // Modal state
     const [modalOpen, setModalOpen] = useState(false);
@@ -471,20 +494,46 @@ export default function ControlCenterClient() {
     useEffect(() => {
         setSearch("");
         setPage(1);
+        setSortCol(null);
+        setSortDir("asc");
         fetchData();
     }, [fetchData]);
 
-    // ── Filtered + paginated rows ────────────────────────────────────────────
+    // ── Sort handler ─────────────────────────────────────────────
 
-    const filtered = (data?.rows ?? []).filter((row) => {
-        if (!search) return true;
-        const q = search.toLowerCase();
-        return tableCols.some((col) => (row[col] ?? "").toLowerCase().includes(q));
-    });
+    const sortableCols = tab === "books" ? SORTABLE_BOOK_COLS : SORTABLE_STANDARD_COLS;
 
-    const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+    const handleSort = (col: string) => {
+        if (!sortableCols.has(col)) return;
+        if (sortCol === col) {
+            setSortDir((d) => d === "asc" ? "desc" : "asc");
+        } else {
+            setSortCol(col);
+            setSortDir("asc");
+        }
+        setPage(1);
+    };
+
+    // ── Filtered + sorted + paginated rows ─────────────────────────────
+
+    const sorted = useMemo(() => {
+        const rows = (data?.rows ?? []).filter((row) => {
+            if (!search) return true;
+            const q = search.toLowerCase();
+            return tableCols.some((col) => (row[col] ?? "").toLowerCase().includes(q));
+        });
+        if (!sortCol) return rows;
+        return [...rows].sort((a, b) => {
+            const va = a[sortCol] ?? "";
+            const vb = b[sortCol] ?? "";
+            const cmp = va.localeCompare(vb);
+            return sortDir === "asc" ? cmp : -cmp;
+        });
+    }, [data, search, sortCol, sortDir, tableCols]);
+
+    const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
     const currentPage = Math.min(page, totalPages);
-    const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    const pageRows = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     // ── Save (create / update) ───────────────────────────────────────────────
 
@@ -609,7 +658,7 @@ export default function ControlCenterClient() {
                         <div className="flex items-center justify-center py-24">
                             <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                         </div>
-                    ) : filtered.length === 0 ? (
+                    ) : sorted.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-24 text-gray-400 gap-3">
                             {tab === "books" ? <BookOpen className="w-10 h-10" /> : <Award className="w-10 h-10" />}
                             <p className="text-sm">No {tab} found{search ? " for your search" : ""}.</p>
@@ -620,11 +669,29 @@ export default function ControlCenterClient() {
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="border-b bg-gray-50">
-                                            {tableCols.map((col) => (
-                                                <th key={col} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
-                                                    {labels[col] ?? col}
-                                                </th>
-                                            ))}
+                                            {tableCols.map((col) => {
+                                                const isSortable = sortableCols.has(col);
+                                                const isActive = sortCol === col;
+                                                return (
+                                                    <th
+                                                        key={col}
+                                                        className={`text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap ${isSortable ? "cursor-pointer select-none hover:text-gray-700" : ""
+                                                            }`}
+                                                        onClick={() => isSortable && handleSort(col)}
+                                                    >
+                                                        <span className="inline-flex items-center gap-1">
+                                                            {labels[col] ?? col}
+                                                            {isSortable && (
+                                                                isActive
+                                                                    ? (sortDir === "asc"
+                                                                        ? <ArrowUp className="w-3 h-3" />
+                                                                        : <ArrowDown className="w-3 h-3" />)
+                                                                    : <ArrowUpDown className="w-3 h-3 opacity-40" />
+                                                            )}
+                                                        </span>
+                                                    </th>
+                                                );
+                                            })}
                                             <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide">
                                                 Actions
                                             </th>
@@ -635,7 +702,10 @@ export default function ControlCenterClient() {
                                             <tr key={row._index} className="hover:bg-gray-50 transition-colors">
                                                 {tableCols.map((col) => (
                                                     <td key={col} className="px-4 py-3 text-gray-700 max-w-[220px] truncate" title={row[col]}>
-                                                        {row[col] || <span className="text-gray-300">—</span>}
+                                                        {col === "Updated_At"
+                                                            ? <span className="text-gray-500 text-xs">{formatDateTime(row[col], defaultTimestamp.current)}</span>
+                                                            : (row[col] || <span className="text-gray-300">—</span>)
+                                                        }
                                                     </td>
                                                 ))}
                                                 <td className="px-4 py-3">
@@ -663,7 +733,7 @@ export default function ControlCenterClient() {
                             {/* Pagination */}
                             <div className="flex items-center justify-between px-4 py-3 border-t bg-gray-50 text-sm text-gray-500">
                                 <span>
-                                    Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} of {filtered.length}
+                                    Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, sorted.length)}–{Math.min(currentPage * PAGE_SIZE, sorted.length)} of {sorted.length}
                                 </span>
                                 <div className="flex items-center gap-1">
                                     <button

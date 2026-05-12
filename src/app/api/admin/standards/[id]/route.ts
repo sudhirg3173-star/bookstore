@@ -4,17 +4,28 @@ import { invalidateStandardsCache } from "@/lib/standards";
 
 export const dynamic = "force-dynamic";
 
+/** Merge any keys in `body` that aren't yet in `headers`. */
+function mergeHeaders(headers: string[], body: Record<string, string>): string[] {
+    const merged = [...headers];
+    Object.keys(body).forEach((k) => { if (!merged.includes(k)) merged.push(k); });
+    return merged;
+}
+
 /** PUT /api/admin/standards/[id] — update row at index */
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const index = parseInt(id, 10);
     try {
         const body: Record<string, string> = await req.json();
+        body["Updated_At"] = new Date().toISOString();
         const { headers, rows } = readCSV(STANDARDS_CSV_PATH);
         if (index < 0 || index >= rows.length) {
             return NextResponse.json({ error: "Row not found" }, { status: 404 });
         }
-        rows[index] = body;
+        const merged = mergeHeaders(headers, body);
+        const cleanRow: Record<string, string> = {};
+        merged.forEach((h) => { cleanRow[h] = body[h] ?? rows[index][h] ?? ""; });
+        rows[index] = cleanRow;
         writeCSV(STANDARDS_CSV_PATH, headers, rows);
         invalidateStandardsCache();
         return NextResponse.json({ success: true });
