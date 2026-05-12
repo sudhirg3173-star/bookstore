@@ -49,8 +49,8 @@ const STANDARD_LABELS: Record<string, string> = {
     Updated_At: "Updated",
 };
 
-const BOOK_TABLE_COLS = ["Title", "Author", "Subject", "Category", "Price", "Publication_Year", "Updated_At"];
-const STANDARD_TABLE_COLS = ["Standard Number", "Standard Name", "PUBLISHER", "YEAR", "Price", "Updated_At"];
+const BOOK_TABLE_COLS = ["Title", "Author", "Subject", "Category", "Currency", "Price", "Publication_Year", "Updated_At"];
+const STANDARD_TABLE_COLS = ["Standard Number", "Standard Name", "PUBLISHER", "YEAR", "Currency", "Price", "Updated_At"];
 
 // All table columns are sortable
 const SORTABLE_BOOK_COLS = new Set(BOOK_TABLE_COLS);
@@ -68,7 +68,7 @@ function formatDateTime(iso: string, fallback: string): string {
     }
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 
@@ -435,6 +435,7 @@ export default function ControlCenterClient() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
     const [sortCol, setSortCol] = useState<string | null>(null);
     const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
@@ -494,6 +495,7 @@ export default function ControlCenterClient() {
     useEffect(() => {
         setSearch("");
         setPage(1);
+        setPageSize(10);
         setSortCol(null);
         setSortDir("asc");
         fetchData();
@@ -531,9 +533,9 @@ export default function ControlCenterClient() {
         });
     }, [data, search, sortCol, sortDir, tableCols]);
 
-    const totalPages = Math.max(1, Math.ceil(sorted.length / PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
     const currentPage = Math.min(page, totalPages);
-    const pageRows = sorted.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+    const pageRows = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     // ── Save (create / update) ───────────────────────────────────────────────
 
@@ -732,9 +734,23 @@ export default function ControlCenterClient() {
 
                             {/* Pagination */}
                             <div className="flex items-center justify-between px-4 py-3 border-t bg-gray-50 text-sm text-gray-500">
-                                <span>
-                                    Showing {Math.min((currentPage - 1) * PAGE_SIZE + 1, sorted.length)}–{Math.min(currentPage * PAGE_SIZE, sorted.length)} of {sorted.length}
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    <span>Showing {Math.min((currentPage - 1) * pageSize + 1, sorted.length)}–{Math.min(currentPage * pageSize, sorted.length)} of {sorted.length}</span>
+                                    <span className="text-gray-300">|</span>
+                                    <span className="text-xs text-gray-400">Rows:</span>
+                                    {PAGE_SIZE_OPTIONS.map((n) => (
+                                        <button
+                                            key={n}
+                                            onClick={() => { setPageSize(n); setPage(1); }}
+                                            className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${pageSize === n
+                                                    ? "bg-blue-600 text-white"
+                                                    : "hover:bg-gray-200 text-gray-600"
+                                                }`}
+                                        >
+                                            {n}
+                                        </button>
+                                    ))}
+                                </div>
                                 <div className="flex items-center gap-1">
                                     <button
                                         onClick={() => setPage((p) => Math.max(1, p - 1))}
