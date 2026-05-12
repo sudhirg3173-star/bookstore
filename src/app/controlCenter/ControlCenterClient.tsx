@@ -42,7 +42,9 @@ const STANDARD_LABELS: Record<string, string> = {
     "Standard Name": "Standard Name",
     YEAR: "Year",
     PUBLISHER: "Publisher",
+    Currency: "Currency",
     Price: "Price",
+    Image_URL: "Image URL",
     Description: "Description",
     Updated_At: "Updated",
 };
@@ -283,8 +285,8 @@ function Modal({
             }
             init[h] = val;
         });
-        // Default Currency to INR when adding a new book
-        if (!row && tab === "books" && !init["Currency"]) init["Currency"] = "INR";
+        // Default Currency to INR when adding a new record
+        if (!row && !init["Currency"]) init["Currency"] = "INR";
         return init;
     });
 
@@ -468,10 +470,8 @@ export default function ControlCenterClient() {
             ).sort();
             if (unique.length > 0) opts[field] = unique;
         }
-        // Hardcoded currency dropdown for books
-        if (tab === "books") {
-            opts["Currency"] = ["INR", "USD", "GBP", "EUR"];
-        }
+        // Hardcoded currency dropdown for books and standards
+        opts["Currency"] = ["INR", "USD", "GBP", "EUR"];
         return opts;
     }, [data, tab]);
 
@@ -759,20 +759,30 @@ export default function ControlCenterClient() {
             </div>
 
             {/* Add / Edit Modal */}
-            {modalOpen && data && (
-                <Modal
-                    title={editRow ? `Edit ${tab === "books" ? "Book" : "Standard"}` : `Add ${tab === "books" ? "Book" : "Standard"}`}
-                    headers={data.headers}
-                    labels={labels}
-                    row={editRow}
-                    tab={tab}
-                    imageNameKey={imageNameKey}
-                    dropdownOptions={dropdownOptions}
-                    onSave={handleSave}
-                    onClose={() => { setModalOpen(false); setEditRow(null); }}
-                    saving={saving}
-                />
-            )}
+            {modalOpen && data && (() => {
+                // Build modal headers with Currency right after Price and Image_URL after Currency
+                const STANDARDS_FLOAT = ["Currency", "Image_URL"];
+                const baseHeaders = data.headers.filter((h) => !STANDARDS_FLOAT.includes(h));
+                const priceIdx = baseHeaders.indexOf("Price");
+                const insertAt = priceIdx >= 0 ? priceIdx + 1 : baseHeaders.length;
+                const modalHeaders = tab === "standards"
+                    ? [...baseHeaders.slice(0, insertAt), "Currency", "Image_URL", ...baseHeaders.slice(insertAt)]
+                    : data.headers;
+                return (
+                    <Modal
+                        title={editRow ? `Edit ${tab === "books" ? "Book" : "Standard"}` : `Add ${tab === "books" ? "Book" : "Standard"}`}
+                        headers={modalHeaders}
+                        labels={labels}
+                        row={editRow}
+                        tab={tab}
+                        imageNameKey={imageNameKey}
+                        dropdownOptions={dropdownOptions}
+                        onSave={handleSave}
+                        onClose={() => { setModalOpen(false); setEditRow(null); }}
+                        saving={saving}
+                    />
+                );
+            })()}
 
             {/* Delete Confirm */}
             {deleteRow && (

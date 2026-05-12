@@ -110,14 +110,23 @@ export default function CartPage() {
                                         href={getBookUrl(item.book)}
                                         className="flex-shrink-0 w-16 h-22 bg-gray-50 rounded-lg overflow-hidden border border-gray-100"
                                     >
-                                        <Image
-                                            src={item.book.imageUrl}
-                                            alt={item.book.title}
-                                            width={64}
-                                            height={88}
-                                            className="w-full h-full object-contain p-1"
-                                            onError={() => { }}
-                                        />
+                                        {item.book.imageUrl ? (
+                                            <Image
+                                                src={item.book.imageUrl}
+                                                alt={item.book.title}
+                                                width={64}
+                                                height={88}
+                                                className="w-full h-full object-contain p-1"
+                                                onError={() => { }}
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-900 text-white gap-1 p-1">
+                                                <span className="text-[9px] font-black tracking-tight text-center leading-tight">
+                                                    {item.book.authors}
+                                                </span>
+                                                <span className="text-[8px] bg-white/20 px-1 rounded text-center">STD</span>
+                                            </div>
+                                        )}
                                     </Link>
 
                                     <div className="flex-1 min-w-0">

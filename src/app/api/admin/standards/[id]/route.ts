@@ -26,7 +26,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         const cleanRow: Record<string, string> = {};
         merged.forEach((h) => { cleanRow[h] = body[h] ?? rows[index][h] ?? ""; });
         rows[index] = cleanRow;
-        writeCSV(STANDARDS_CSV_PATH, headers, rows);
+        writeCSV(STANDARDS_CSV_PATH, merged, rows);
         invalidateStandardsCache();
         return NextResponse.json({ success: true });
     } catch (err) {

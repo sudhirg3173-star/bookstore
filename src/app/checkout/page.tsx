@@ -497,14 +497,23 @@ export default function CheckoutPage() {
                                                     href={getBookUrl(item.book)}
                                                     className="flex-shrink-0 w-10 h-14 bg-gray-50 rounded border border-gray-100 overflow-hidden"
                                                 >
-                                                    <Image
-                                                        src={item.book.imageUrl}
-                                                        alt={item.book.title}
-                                                        width={40}
-                                                        height={56}
-                                                        className="w-full h-full object-contain p-0.5"
-                                                        onError={() => { }}
-                                                    />
+                                                    {item.book.imageUrl ? (
+                                                        <Image
+                                                            src={item.book.imageUrl}
+                                                            alt={item.book.title}
+                                                            width={40}
+                                                            height={56}
+                                                            className="w-full h-full object-contain p-0.5"
+                                                            onError={() => { }}
+                                                        />
+                                                    ) : (
+                                                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-slate-700 to-slate-900 text-white gap-0.5 p-0.5">
+                                                            <span className="text-[7px] font-black tracking-tight text-center leading-tight">
+                                                                {item.book.authors}
+                                                            </span>
+                                                            <span className="text-[6px] bg-white/20 px-0.5 rounded">STD</span>
+                                                        </div>
+                                                    )}
                                                 </Link>
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-xs font-medium text-gray-800 line-clamp-2">

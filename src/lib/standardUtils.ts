@@ -20,7 +20,7 @@ export function standardToBook(s: Standard): Book {
         pages: 0,
         publicationYear: s.year,
         category: "Standards",
-        imageUrl: "",
+        imageUrl: s.imageUrl || "",
         bookUrl: `/standards/${s.slug}`,
         description: s.description,
         slug: "std-" + s.slug,

@@ -58,9 +58,10 @@ export function getAllStandards(): Standard[] {
         const rows = parseCSV(content);
         _standards = rows.map((row) => {
             const rawPrice = row["price"] || "0";
-            // Extract currency code from price string, e.g. "INR 16,799.16" → "INR"
+            // Prefer the dedicated Currency column; fall back to extracting from the price string
+            const currencyFromCol = (row["currency"] || "").trim().toUpperCase();
             const currencyMatch = rawPrice.match(/^([A-Z]{2,4})\s*/i);
-            const currency = currencyMatch ? currencyMatch[1].toUpperCase() : "INR";
+            const currency = currencyFromCol || (currencyMatch ? currencyMatch[1].toUpperCase() : "INR");
             const price = parseFloat(rawPrice.replace(/[^0-9.]/g, "")) || 0;
             const number = row["standard_number"] || row["standard_number_"] || Object.values(row)[0] || "";
             return {
@@ -71,6 +72,7 @@ export function getAllStandards(): Standard[] {
                 price,
                 currency,
                 description: row["description"] || "",
+                imageUrl: row["image_url"] || "",
                 slug: standardSlug(number),
             } as Standard;
         });

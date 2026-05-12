@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Heart, ShoppingCart, FileText, Award } from "lucide-react";
 import { Standard } from "@/types/standard";
 import { standardToBook } from "@/lib/standardUtils";
@@ -60,24 +61,35 @@ export default function StandardCard({ standard, className }: StandardCardProps)
             <Link
                 href={`/standards/${standard.slug}`}
                 className={cn(
-                    "relative flex flex-col items-center justify-center bg-gradient-to-br aspect-[3/4] p-5 text-white",
-                    gradientFor(standard.publisher)
+                    "relative flex flex-col items-center justify-center aspect-[3/4] overflow-hidden",
+                    !standard.imageUrl && cn("bg-gradient-to-br p-5 text-white", gradientFor(standard.publisher))
                 )}
             >
-                {/* Glossy shine */}
-                <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none" />
-
-                <div className="relative z-10 flex flex-col items-center gap-3 text-center">
-                    <div className="w-14 h-14 rounded-full bg-white/15 border border-white/20 flex items-center justify-center">
-                        <FileText className="w-7 h-7 text-white/90" />
-                    </div>
-                    <span className="text-2xl font-black tracking-tight leading-tight px-2">
-                        {acronym}
-                    </span>
-                    <span className="text-[11px] font-semibold bg-white/20 px-2 py-0.5 rounded-full">
-                        {standard.publisher} · {standard.year}
-                    </span>
-                </div>
+                {standard.imageUrl ? (
+                    <Image
+                        src={standard.imageUrl}
+                        alt={standard.name}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                    />
+                ) : (
+                    <>
+                        {/* Glossy shine */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none" />
+                        <div className="relative z-10 flex flex-col items-center gap-3 text-center">
+                            <div className="w-14 h-14 rounded-full bg-white/15 border border-white/20 flex items-center justify-center">
+                                <FileText className="w-7 h-7 text-white/90" />
+                            </div>
+                            <span className="text-2xl font-black tracking-tight leading-tight px-2">
+                                {acronym}
+                            </span>
+                            <span className="text-[11px] font-semibold bg-white/20 px-2 py-0.5 rounded-full">
+                                {standard.publisher} · {standard.year}
+                            </span>
+                        </div>
+                    </>
+                )}
 
                 {/* Hover overlay */}
                 <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">

@@ -6,5 +6,6 @@ export interface Standard {
     price: number;
     currency: string;     // e.g. "INR", "USD"
     description: string;
+    imageUrl: string;
     slug: string;         // URL-safe: "apqp-3-2024"
 }
