@@ -52,9 +52,9 @@ const STANDARD_LABELS: Record<string, string> = {
 const BOOK_TABLE_COLS = ["Title", "Author", "Subject", "Category", "Price", "Publication_Year", "Updated_At"];
 const STANDARD_TABLE_COLS = ["Standard Number", "Standard Name", "PUBLISHER", "YEAR", "Price", "Updated_At"];
 
-// Columns that support click-to-sort
-const SORTABLE_BOOK_COLS = new Set(["Title", "Updated_At"]);
-const SORTABLE_STANDARD_COLS = new Set(["Standard Name", "Updated_At"]);
+// All table columns are sortable
+const SORTABLE_BOOK_COLS = new Set(BOOK_TABLE_COLS);
+const SORTABLE_STANDARD_COLS = new Set(STANDARD_TABLE_COLS);
 
 function formatDateTime(iso: string, fallback: string): string {
     const date = new Date(iso || fallback);
