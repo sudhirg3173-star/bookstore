@@ -14,7 +14,7 @@ export default function PromoBanner() {
                     </div>
                     <div className="hidden sm:block w-px h-6 bg-amber-600/40" />
                     <p className="text-2xl font-extrabold text-amber-900">
-                        20% Off Select Books
+                        Discount On Selected Books
                     </p>
                     <div className="hidden sm:block w-px h-6 bg-amber-600/40" />
                     <Link
