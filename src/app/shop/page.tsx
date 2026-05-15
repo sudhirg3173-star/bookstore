@@ -4,8 +4,8 @@ import ProductGrid from "@/components/shop/ProductGrid";
 import ProductGridSkeleton from "@/components/shop/ProductGridSkeleton";
 
 export const metadata = {
-    title: "Shop All Books — Kabdwalbook",
-    description: "Browse our complete collection of academic and professional books.",
+    title: "Buy Academic, Engineering, Management & Medical Books Online | Kabdwal Book Store",
+    description: "Shop the latest academic, engineering, management, medical, AI, and competitive exam books online at Kabdwal Book Store. Explore bestselling textbooks, reference guides, and latest editions with easy online ordering.",
 };
 
 export default function ShopPage() {
