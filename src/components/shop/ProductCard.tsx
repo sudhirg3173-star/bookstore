@@ -70,11 +70,6 @@ export default function ProductCard({ book, className }: ProductCardProps) {
 
                 {/* Badges */}
                 <div className="absolute top-2 left-2 flex flex-col gap-1">
-                    {book.discount && (
-                        <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-sm">
-                            -{book.discount}%
-                        </span>
-                    )}
                     {book.availability === "Out of Stock" && (
                         <span className="bg-gray-700 text-white text-[10px] font-bold px-2 py-0.5 rounded-sm">
                             OUT OF STOCK
@@ -86,6 +81,13 @@ export default function ProductCard({ book, className }: ProductCardProps) {
                         </span>
                     )}
                 </div>
+
+                {/* Discount banner */}
+                {book.discount && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-primary text-white text-xs font-bold py-1 text-center tracking-wide">
+                        -{book.discount}% OFF
+                    </div>
+                )}
 
                 {/* Hover actions overlay */}
                 <div className="absolute top-2 right-2 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200">

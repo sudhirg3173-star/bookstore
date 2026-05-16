@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { Book } from "@/types/book";
-import { getBookRating, getReviewCount, getDiscount } from "@/lib/utils";
+import { getBookRating, getReviewCount } from "@/lib/utils";
 
 function parseCSVLine(line: string): string[] {
     const result: string[] = [];
@@ -121,7 +121,8 @@ export function getAllBooks(): Book[] {
             const price = parseFloat(rawPrice.replace(/[^\d.]/g, "")) || 0;
             const rating = getBookRating(sku);
             const reviewCount = getReviewCount(sku);
-            const discount = getDiscount(sku);
+            const rawDiscount = parseInt(row["discount"] || row["Discount"] || "0", 10);
+            const discount = rawDiscount > 0 ? rawDiscount : undefined;
 
             return {
                 subject: row["subject"] || "",

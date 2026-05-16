@@ -107,12 +107,19 @@ export default function StandardCard({ standard, className }: StandardCardProps)
                     </button>
                 </div>
 
-                {/* Badge */}
+                {/* Badges */}
                 <div className="absolute top-2 left-2">
                     <span className="bg-amber-400 text-amber-900 text-[10px] font-bold px-2 py-0.5 rounded-sm flex items-center gap-1">
                         <Award className="w-3 h-3" /> STANDARD
                     </span>
                 </div>
+
+                {/* Discount banner */}
+                {standard.discount && standard.discount > 0 && (
+                    <div className="absolute bottom-0 left-0 right-0 bg-primary text-white text-xs font-bold py-1 text-center tracking-wide">
+                        -{standard.discount}% OFF
+                    </div>
+                )}
             </Link>
 
             {/* Card body */}
@@ -132,9 +139,20 @@ export default function StandardCard({ standard, className }: StandardCardProps)
 
                 <div className="flex items-center justify-between mt-auto">
                     <div className="flex flex-col">
-                        <span className="text-base font-extrabold text-gray-900">
-                            {formatPrice(standard.price, standard.currency)}
-                        </span>
+                        {standard.discount && standard.discount > 0 ? (
+                            <>
+                                <span className="text-base font-extrabold text-primary">
+                                    {formatPrice(standard.price * (1 - standard.discount / 100), standard.currency)}
+                                </span>
+                                <span className="text-xs text-gray-400 line-through">
+                                    {formatPrice(standard.price, standard.currency)}
+                                </span>
+                            </>
+                        ) : (
+                            <span className="text-base font-extrabold text-gray-900">
+                                {formatPrice(standard.price, standard.currency)}
+                            </span>
+                        )}
                     </div>
                     <button
                         onClick={handleAddToCart}

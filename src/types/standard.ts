@@ -8,4 +8,5 @@ export interface Standard {
     description: string;
     imageUrl: string;
     slug: string;         // URL-safe: "apqp-3-2024"
+    discount?: number;    // percentage, e.g. 10 = 10% off; undefined or 0 = no discount
 }

@@ -64,6 +64,8 @@ export function getAllStandards(): Standard[] {
             const currency = currencyFromCol || (currencyMatch ? currencyMatch[1].toUpperCase() : "INR");
             const price = parseFloat(rawPrice.replace(/[^0-9.]/g, "")) || 0;
             const number = row["standard_number"] || row["standard_number_"] || Object.values(row)[0] || "";
+            const rawDiscount = parseInt(row["discount"] || row["Discount"] || "0", 10);
+            const discount = rawDiscount > 0 ? rawDiscount : undefined;
             return {
                 number,
                 name: row["standard_name"] || "",
@@ -74,6 +76,7 @@ export function getAllStandards(): Standard[] {
                 description: row["description"] || "",
                 imageUrl: row["image_url"] || "",
                 slug: standardSlug(number),
+                discount,
             } as Standard;
         });
         return _standards;

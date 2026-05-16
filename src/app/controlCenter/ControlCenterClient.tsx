@@ -28,6 +28,7 @@ const BOOK_LABELS: Record<string, string> = {
     ISBN: "ISBN",
     Currency: "Currency",
     Price: "Price",
+    Discount: "Discount (%)",
     Pages: "Pages",
     Publication_Year: "Publication Year",
     Category: "Category",
@@ -44,6 +45,7 @@ const STANDARD_LABELS: Record<string, string> = {
     PUBLISHER: "Publisher",
     Currency: "Currency",
     Price: "Price",
+    Discount: "Discount (%)",
     Image_URL: "Image URL",
     Description: "Description",
     Updated_At: "Updated",
@@ -287,6 +289,8 @@ function Modal({
         });
         // Default Currency to INR when adding a new record
         if (!row && !init["Currency"]) init["Currency"] = "INR";
+        // Default Discount to 0
+        if (!init["Discount"]) init["Discount"] = "0";
         return init;
     });
 
@@ -353,6 +357,28 @@ function Modal({
                                         value={form[h]}
                                         onChange={(e) => setForm((f) => ({ ...f, [h]: e.target.value }))}
                                     />
+                                ) : h === "Discount" ? (
+                                    <div className="flex items-center gap-3">
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            step="1"
+                                            placeholder="0"
+                                            className="w-32 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            value={form[h]}
+                                            onChange={(e) => {
+                                                const v = Math.min(100, Math.max(0, parseInt(e.target.value || "0", 10)));
+                                                setForm((f) => ({ ...f, [h]: String(v) }));
+                                            }}
+                                        />
+                                        <span className="text-sm text-gray-500">%</span>
+                                        {parseInt(form[h] || "0", 10) > 0 && (
+                                            <span className="bg-primary text-white text-xs font-bold px-2 py-0.5 rounded-sm">
+                                                -{form[h]}% OFF
+                                            </span>
+                                        )}
+                                    </div>
                                 ) : h === "Description" ? (
                                     <textarea
                                         rows={4}
@@ -743,8 +769,8 @@ export default function ControlCenterClient() {
                                             key={n}
                                             onClick={() => { setPageSize(n); setPage(1); }}
                                             className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${pageSize === n
-                                                    ? "bg-blue-600 text-white"
-                                                    : "hover:bg-gray-200 text-gray-600"
+                                                ? "bg-blue-600 text-white"
+                                                : "hover:bg-gray-200 text-gray-600"
                                                 }`}
                                         >
                                             {n}
@@ -777,13 +803,19 @@ export default function ControlCenterClient() {
             {/* Add / Edit Modal */}
             {modalOpen && data && (() => {
                 // Build modal headers with Currency right after Price and Image_URL after Currency
+                const ensureDiscount = (hdrs: string[]): string[] => {
+                    if (hdrs.includes("Discount")) return hdrs;
+                    const idx = hdrs.indexOf("Price");
+                    const at = idx >= 0 ? idx + 1 : hdrs.length;
+                    return [...hdrs.slice(0, at), "Discount", ...hdrs.slice(at)];
+                };
                 const STANDARDS_FLOAT = ["Currency", "Image_URL"];
                 const baseHeaders = data.headers.filter((h) => !STANDARDS_FLOAT.includes(h));
                 const priceIdx = baseHeaders.indexOf("Price");
                 const insertAt = priceIdx >= 0 ? priceIdx + 1 : baseHeaders.length;
                 const modalHeaders = tab === "standards"
-                    ? [...baseHeaders.slice(0, insertAt), "Currency", "Image_URL", ...baseHeaders.slice(insertAt)]
-                    : data.headers;
+                    ? ensureDiscount([...baseHeaders.slice(0, insertAt), "Currency", "Image_URL", ...baseHeaders.slice(insertAt)])
+                    : ensureDiscount(data.headers);
                 return (
                     <Modal
                         title={editRow ? `Edit ${tab === "books" ? "Book" : "Standard"}` : `Add ${tab === "books" ? "Book" : "Standard"}`}
