@@ -30,6 +30,7 @@ export default function Header({ subjects }: { subjects: string[] }) {
     const router = useRouter();
     const searchRef = useRef<HTMLInputElement>(null);
     const userMenuRef = useRef<HTMLDivElement>(null);
+    const categoryRef = useRef<HTMLDivElement>(null);
 
     const cartCount = useCartStore((s) => s.getItemCount());
     const wishlistCount = useWishlistStore((s) => s.items.length);
@@ -45,6 +46,17 @@ export default function Header({ subjects }: { subjects: string[] }) {
         const handler = (e: MouseEvent) => {
             if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
                 setUserMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handler);
+        return () => document.removeEventListener("mousedown", handler);
+    }, []);
+
+    // Close category dropdown on outside click
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) {
+                setCategoryOpen(false);
             }
         };
         document.addEventListener("mousedown", handler);
@@ -100,14 +112,22 @@ export default function Header({ subjects }: { subjects: string[] }) {
                                 Home
                             </Link>
                             {/* Books dropdown */}
-                            <div className="relative">
-                                <button
-                                    className="flex items-center gap-1 text-sm font-medium hover:text-primary transition-colors"
-                                    onClick={() => setCategoryOpen(!categoryOpen)}
-                                    onBlur={() => setTimeout(() => setCategoryOpen(false), 150)}
-                                >
-                                    Books <ChevronDown className="w-3.5 h-3.5" />
-                                </button>
+                            <div className="relative" ref={categoryRef}>
+                                <div className="flex items-center gap-0.5">
+                                    <Link
+                                        href="/shop"
+                                        className="text-sm font-medium hover:text-primary transition-colors"
+                                    >
+                                        Books
+                                    </Link>
+                                    <button
+                                        className="p-0.5 hover:text-primary transition-colors"
+                                        onClick={() => setCategoryOpen(!categoryOpen)}
+                                        aria-label="Browse book categories"
+                                    >
+                                        <ChevronDown className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
                                 {categoryOpen && (
                                     <div className="absolute top-full left-0 mt-2 w-60 bg-white text-gray-800 rounded-lg shadow-xl py-2 animate-slide-down z-50">
                                         {subjects.map((s) => (
@@ -135,7 +155,7 @@ export default function Header({ subjects }: { subjects: string[] }) {
                             <Link href="/standards" className="text-sm font-medium hover:text-primary transition-colors">
                                 Standards
                             </Link>
-                            <Link href="/shop?sort=new" className="text-sm font-medium hover:text-primary transition-colors">
+                            <Link href="/category/new-releases" className="text-sm font-medium hover:text-primary transition-colors">
                                 New Releases
                             </Link>
                             <a
