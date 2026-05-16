@@ -6,10 +6,13 @@ import { getSubjects } from "@/lib/books";
 import { headers } from "next/headers";
 
 export const metadata: Metadata = {
-    title: "Kabdwalbook — Your World of Books",
+    title: "Buy Academic, Engineering, Management & Medical Books Online | Kabdwal Book Store",
     description:
         "Discover thousands of books across technology, civil services, management, and more. Best prices on academic and professional books.",
-    keywords: "books, academic books, UPSC, technology books, online bookstore",
+    keywords: "Shop the latest academic, engineering, management, medical, AI, and competitive exam books online at Kabdwal Book Store. Explore bestselling textbooks, reference guides, and latest editions with easy online ordering.",
+    icons: {
+        icon: "/images/favicon.png",
+    },
 };
 
 export default async function RootLayout({
