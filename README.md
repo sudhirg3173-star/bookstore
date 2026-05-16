@@ -123,3 +123,10 @@ Books data is read directly from `books-master.csv` at runtime using Node.js `fs
 
 Ratings and review counts are deterministically generated from SKU for consistent display.
 
+## Trending 
+* The books need ISBN numbers to be added to the books array 
+* In the standard array, the standardSlug() function replaces all non-alphanumeric characters (including :) with -. So the slugs in the JSON must use hyphens, not colons.
+
+e.g. 
+* CQI-27-2:2018 → slug is cqi-27-2-2018
+
