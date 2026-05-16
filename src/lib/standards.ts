@@ -87,6 +87,23 @@ export function getStandardBySlug(slug: string): Standard | undefined {
     return getAllStandards().find((s) => s.slug === slug);
 }
 
+export function getTrendingStandards(): Standard[] {
+    const jsonPath = path.join(process.cwd(), "data", "trending.json");
+    let slugs: string[] = [];
+    try {
+        const data = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+        slugs = data.standard ?? [];
+    } catch {
+        console.error("trending.json not found or invalid");
+        return [];
+    }
+
+    const slugMap = new Map(getAllStandards().map((s) => [s.slug, s]));
+    return slugs
+        .map((slug) => slugMap.get(slug))
+        .filter((s): s is Standard => s !== undefined);
+}
+
 export function searchStandards(query: string): Standard[] {
     if (!query.trim()) return [];
     const q = query.toLowerCase();

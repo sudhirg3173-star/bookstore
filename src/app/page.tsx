@@ -13,14 +13,14 @@ import {
     getTopBooks,
     getNewReleases,
 } from "@/lib/books";
-import { getAllStandards } from "@/lib/standards";
+import { getTrendingStandards } from "@/lib/standards";
 
 export default function HomePage() {
     const trending = getTrendingBooks(8);
     const booksOfMonth = getBooksOfMonth(3);
     const topBooks = getTopBooks(8);
     const newReleases = getNewReleases(8);
-    const standards = getAllStandards();
+    const standards = getTrendingStandards();
 
     return (
         <>

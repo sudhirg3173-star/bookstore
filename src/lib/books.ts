@@ -187,27 +187,21 @@ export function getNewReleases(limit?: number): Book[] {
 }
 
 export function getTrendingBooks(limit = 8): Book[] {
-    const inStock = getAllBooks().filter((b) => b.availability === "In Stock");
-    const bySubject = new Map<string, Book[]>();
-
-    inStock.forEach((book) => {
-        if (!bySubject.has(book.subject)) bySubject.set(book.subject, []);
-        bySubject.get(book.subject)!.push(book);
-    });
-
-    const trending: Book[] = [];
-    const subjects = Array.from(bySubject.keys());
-    let idx = 0;
-
-    while (trending.length < limit && idx < limit * subjects.length) {
-        const subject = subjects[idx % subjects.length];
-        const subBooks = bySubject.get(subject)!;
-        const book = subBooks[Math.floor(idx / subjects.length)];
-        if (book) trending.push(book);
-        idx++;
+    const jsonPath = path.join(process.cwd(), "data", "trending.json");
+    let skus: string[] = [];
+    try {
+        const data = JSON.parse(fs.readFileSync(jsonPath, "utf-8"));
+        skus = data.books ?? [];
+    } catch {
+        console.error("trending.json not found or invalid");
+        return [];
     }
 
-    return trending.slice(0, limit);
+    const bookMap = new Map(getAllBooks().map((b) => [b.sku, b]));
+    return skus
+        .slice(0, limit)
+        .map((sku) => bookMap.get(sku))
+        .filter((b): b is Book => b !== undefined);
 }
 
 export function getFeaturedBooks(limit = 8): Book[] {
