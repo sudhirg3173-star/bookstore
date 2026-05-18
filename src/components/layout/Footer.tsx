@@ -9,7 +9,7 @@ const subjectSlug = (s: string) =>
 
 export default function Footer({ subjects }: { subjects: string[] }) {
     return (
-        <footer className="bg-[#642e2e] text-gray-300">
+        <footer className="bg-[#21285E] text-gray-300">
             {/* Features strip */}
             <div className="border-b border-white/10">
                 <div className="max-w-7xl mx-auto px-4 py-6 flex flex-wrap justify-center gap-8">
