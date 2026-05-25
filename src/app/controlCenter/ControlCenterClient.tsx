@@ -7,6 +7,7 @@ import {
     Plus, Pencil, Trash2, Search, X, BookOpen, Award,
     ChevronLeft, ChevronRight, Loader2, AlertCircle, CheckCircle2,
     Upload, ImageIcon, LogOut, ArrowUpDown, ArrowUp, ArrowDown,
+    FileUp, CheckCircle, Info,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -450,6 +451,322 @@ function DeleteConfirm({ label, onConfirm, onClose, deleting }: {
     );
 }
 
+// ── CsvUploadModal ───────────────────────────────────────────────────────────
+
+type CsvUploadStep = "select" | "validating" | "preview" | "importing" | "done";
+
+interface CsvValidationResult {
+    valid: boolean;
+    hasDupKey: boolean;
+    differences: {
+        missingInUpload: string[];
+        extraInUpload: string[];
+        matchingFields: string[];
+    };
+    stats: {
+        totalRows: number;
+        newRows: number;
+        updatedRows: number;
+    };
+}
+
+interface CsvImportResult {
+    success: boolean;
+    stats: {
+        added: number;
+        updated: number;
+        imagesDownloaded: number;
+        imagesFailed: number;
+    };
+}
+
+function CsvUploadModal({
+    tab, onClose, onSuccess,
+}: {
+    tab: Tab;
+    onClose: () => void;
+    onSuccess: () => void;
+}) {
+    const [step, setStep] = useState<CsvUploadStep>("select");
+    const [file, setFile] = useState<File | null>(null);
+    const [validation, setValidation] = useState<CsvValidationResult | null>(null);
+    const [importResult, setImportResult] = useState<CsvImportResult | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const fileRef = useRef<HTMLInputElement>(null);
+
+    const typeName = tab === "books" ? "Books" : "Standards";
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const f = e.target.files?.[0] ?? null;
+        setFile(f);
+        setValidation(null);
+        setError(null);
+        setStep("select");
+        if (fileRef.current) fileRef.current.value = "";
+    };
+
+    const handleValidate = async () => {
+        if (!file) return;
+        setStep("validating");
+        setError(null);
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("type", tab);
+        fd.append("confirmed", "false");
+        try {
+            const res = await fetch("/api/admin/upload-csv", { method: "POST", body: fd });
+            const json = await res.json();
+            if (!res.ok || !json.valid) {
+                setError(json.error ?? "Validation failed");
+                setStep("select");
+                return;
+            }
+            setValidation(json as CsvValidationResult);
+            setStep("preview");
+        } catch {
+            setError("Network error during validation");
+            setStep("select");
+        }
+    };
+
+    const handleImport = async () => {
+        if (!file) return;
+        setStep("importing");
+        setError(null);
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("type", tab);
+        fd.append("confirmed", "true");
+        try {
+            const res = await fetch("/api/admin/upload-csv", { method: "POST", body: fd });
+            const json = await res.json();
+            if (!res.ok || !json.success) {
+                setError(json.error ?? "Import failed");
+                setStep("preview");
+                return;
+            }
+            setImportResult(json as CsvImportResult);
+            setStep("done");
+            onSuccess();
+        } catch {
+            setError("Network error during import");
+            setStep("preview");
+        }
+    };
+
+    const hasDiffs = validation
+        ? validation.differences.missingInUpload.length > 0 || validation.differences.extraInUpload.length > 0
+        : false;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b">
+                    <div className="flex items-center gap-2">
+                        <FileUp className="w-5 h-5 text-blue-600" />
+                        <h2 className="text-base font-semibold text-gray-800">Upload {typeName} CSV</h2>
+                    </div>
+                    <button onClick={onClose} disabled={step === "validating" || step === "importing"}
+                        className="p-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-40 transition-colors">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+
+                {/* Body */}
+                <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+                    {/* File picker */}
+                    {step !== "done" && (
+                        <div>
+                            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Select CSV File</p>
+                            <div
+                                onClick={() => fileRef.current?.click()}
+                                className="border-2 border-dashed border-gray-200 rounded-xl px-4 py-6 flex flex-col items-center gap-2 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                            >
+                                <FileUp className="w-8 h-8 text-gray-300" />
+                                {file
+                                    ? <p className="text-sm font-medium text-blue-700 text-center break-all">{file.name}</p>
+                                    : <p className="text-sm text-gray-400">Click to choose a .csv file</p>
+                                }
+                                <input
+                                    ref={fileRef}
+                                    type="file"
+                                    accept=".csv,text/csv"
+                                    className="hidden"
+                                    onChange={handleFileChange}
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Validation error */}
+                    {error && (
+                        <div className="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2.5 text-sm text-red-700">
+                            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                            <span>{error}</span>
+                        </div>
+                    )}
+
+                    {/* Validation preview */}
+                    {step === "preview" && validation && (
+                        <div className="space-y-4">
+                            {/* Stats */}
+                            <div className="grid grid-cols-3 gap-3">
+                                {[
+                                    { label: "Total Rows", value: validation.stats.totalRows, color: "text-gray-700" },
+                                    { label: "New", value: validation.stats.newRows, color: "text-green-600" },
+                                    { label: "Updates", value: validation.stats.updatedRows, color: "text-blue-600" },
+                                ].map(({ label, value, color }) => (
+                                    <div key={label} className="bg-gray-50 rounded-xl p-3 text-center border">
+                                        <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Structure differences */}
+                            {hasDiffs ? (
+                                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
+                                    <div className="flex items-center gap-2 text-amber-700 font-semibold text-sm">
+                                        <Info className="w-4 h-4" />
+                                        Structure differences detected
+                                    </div>
+
+                                    {validation.differences.missingInUpload.length > 0 && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-600 mb-1">
+                                                Fields in main CSV <span className="text-amber-700">not present</span> in your upload
+                                                <span className="font-normal text-gray-500"> — existing values will be kept</span>
+                                            </p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {validation.differences.missingInUpload.map(f => (
+                                                    <span key={f} className="inline-block bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-full border border-amber-200">{f}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {validation.differences.extraInUpload.length > 0 && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-600 mb-1">
+                                                Fields in your upload <span className="text-gray-500">not in main CSV</span>
+                                                <span className="font-normal text-gray-500"> — will be ignored</span>
+                                            </p>
+                                            <div className="flex flex-wrap gap-1.5">
+                                                {validation.differences.extraInUpload.map(f => (
+                                                    <span key={f} className="inline-block bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full border border-gray-200">{f}</span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <p className="text-xs text-amber-700">
+                                        Only the <strong>{validation.differences.matchingFields.length}</strong> matching field{validation.differences.matchingFields.length !== 1 ? "s" : ""} will be imported.
+                                        Confirm below to proceed.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-3 py-2.5 text-sm text-green-700">
+                                    <CheckCircle className="w-4 h-4 shrink-0" />
+                                    CSV structure matches perfectly — all fields will be imported.
+                                </div>
+                            )}
+
+                            {!validation.hasDupKey && (
+                                <div className="flex items-start gap-2 rounded-lg bg-blue-50 border border-blue-200 px-3 py-2.5 text-xs text-blue-700">
+                                    <Info className="w-4 h-4 mt-0.5 shrink-0" />
+                                    The deduplication key column was not found in your CSV — all rows will be appended as new entries.
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Importing spinner */}
+                    {step === "importing" && (
+                        <div className="flex flex-col items-center gap-3 py-6 text-gray-500">
+                            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                            <p className="text-sm">Importing data and downloading images…</p>
+                            <p className="text-xs text-gray-400">This may take a moment for large files.</p>
+                        </div>
+                    )}
+
+                    {/* Done */}
+                    {step === "done" && importResult && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-green-700 font-semibold">
+                                <CheckCircle2 className="w-5 h-5" />
+                                Import completed successfully!
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                {[
+                                    { label: "Records Added", value: importResult.stats.added, color: "text-green-600" },
+                                    { label: "Records Updated", value: importResult.stats.updated, color: "text-blue-600" },
+                                    { label: "Images Downloaded", value: importResult.stats.imagesDownloaded, color: "text-purple-600" },
+                                    { label: "Image Failures", value: importResult.stats.imagesFailed, color: importResult.stats.imagesFailed > 0 ? "text-red-600" : "text-gray-400" },
+                                ].map(({ label, value, color }) => (
+                                    <div key={label} className="bg-gray-50 rounded-xl p-3 text-center border">
+                                        <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                                        <p className="text-xs text-gray-500 mt-0.5">{label}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="flex justify-end gap-2 px-6 py-4 border-t bg-gray-50 rounded-b-2xl">
+                    {step === "done" ? (
+                        <button
+                            onClick={onClose}
+                            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                        >
+                            Close
+                        </button>
+                    ) : step === "preview" ? (
+                        <>
+                            <button
+                                onClick={() => { setStep("select"); setValidation(null); }}
+                                className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                            >
+                                Back
+                            </button>
+                            <button
+                                onClick={handleImport}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+                            >
+                                <Upload className="w-4 h-4" />
+                                Confirm &amp; Import
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button
+                                onClick={onClose}
+                                disabled={step === "validating"}
+                                className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100 disabled:opacity-40 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleValidate}
+                                disabled={!file || step === "validating"}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                            >
+                                {step === "validating"
+                                    ? <><Loader2 className="w-4 h-4 animate-spin" /> Validating…</>
+                                    : <><FileUp className="w-4 h-4" /> Validate &amp; Preview</>
+                                }
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function ControlCenterClient() {
@@ -473,6 +790,9 @@ export default function ControlCenterClient() {
     // Delete state
     const [deleteRow, setDeleteRow] = useState<Row | null>(null);
     const [deleting, setDeleting] = useState(false);
+
+    // CSV upload modal
+    const [csvModalOpen, setCsvModalOpen] = useState(false);
 
     // Toast
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -671,13 +991,22 @@ export default function ControlCenterClient() {
                             className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
-                    <button
-                        onClick={() => { setEditRow(null); setModalOpen(true); }}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm shrink-0"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add {tab === "books" ? "Book" : "Standard"}
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                        <button
+                            onClick={() => setCsvModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+                        >
+                            <FileUp className="w-4 h-4" />
+                            Upload CSV
+                        </button>
+                        <button
+                            onClick={() => { setEditRow(null); setModalOpen(true); }}
+                            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add {tab === "books" ? "Book" : "Standard"}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Table card */}
@@ -831,6 +1160,19 @@ export default function ControlCenterClient() {
                     />
                 );
             })()}
+
+            {/* CSV Upload Modal */}
+            {csvModalOpen && (
+                <CsvUploadModal
+                    tab={tab}
+                    onClose={() => setCsvModalOpen(false)}
+                    onSuccess={() => {
+                        setCsvModalOpen(false);
+                        fetchData();
+                        setToast({ message: "CSV imported successfully!", type: "success" });
+                    }}
+                />
+            )}
 
             {/* Delete Confirm */}
             {deleteRow && (

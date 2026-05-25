@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { Book } from "@/types/book";
 import { getBookRating, getReviewCount } from "@/lib/utils";
+import { readCSV, writeCSV } from "@/lib/adminCsv";
 
 function parseCSVLine(line: string): string[] {
     const result: string[] = [];
@@ -89,6 +90,69 @@ export function invalidateBooksCache(): void {
     _books = null;
 }
 
+// ── Background image downloader ───────────────────────────────────────────────
+// Tracks in-progress downloads so the same image isn't fetched multiple times.
+const _downloadingBooks = new Set<string>();
+
+async function downloadAndUpdateBookImage(
+    csvPath: string,
+    isbn: string,
+    imageUrl: string,
+): Promise<void> {
+    const key = `${isbn}::${imageUrl}`;
+    if (_downloadingBooks.has(key)) return;
+    _downloadingBooks.add(key);
+    try {
+        const destDir = path.join(process.cwd(), "public", "images", "books");
+        fs.mkdirSync(destDir, { recursive: true });
+
+        const controller = new AbortController();
+        const timerId = setTimeout(() => controller.abort(), 20_000);
+        try {
+            const res = await fetch(imageUrl, { signal: controller.signal });
+            if (!res.ok) return;
+
+            const contentType = res.headers.get("content-type") ?? "";
+            let ext = ".jpg";
+            if (contentType.includes("png")) ext = ".png";
+            else if (contentType.includes("webp")) ext = ".webp";
+            else if (contentType.includes("gif")) ext = ".gif";
+            else {
+                const urlExt = imageUrl.split("?")[0].split(".").pop()?.toLowerCase();
+                if (urlExt && ["jpg", "jpeg", "png", "webp", "gif"].includes(urlExt))
+                    ext = `.${urlExt === "jpeg" ? "jpg" : urlExt}`;
+            }
+
+            const safeStem = isbn.replace(/[^a-zA-Z0-9_\-.]/g, "_");
+            const destPath = path.join(destDir, safeStem + ext);
+            fs.writeFileSync(destPath, Buffer.from(await res.arrayBuffer()));
+
+            const localPath = `/images/books/${safeStem}${ext}`;
+
+            // Update the CSV row so the local path is persisted
+            const { headers, rows } = readCSV(csvPath);
+            let changed = false;
+            for (const row of rows) {
+                if ((row["ISBN"] ?? "").trim() === isbn.trim() &&
+                    (row["Image_URL"] ?? "").startsWith("http")) {
+                    row["Image_URL"] = localPath;
+                    changed = true;
+                }
+            }
+            if (changed) {
+                writeCSV(csvPath, headers, rows);
+                invalidateBooksCache(); // next request will serve the local path
+            }
+        } finally {
+            clearTimeout(timerId);
+        }
+    } catch (err) {
+        console.error(`Book image download failed (ISBN ${isbn}):`, err);
+    } finally {
+        _downloadingBooks.delete(key);
+    }
+}
+
 function resolveCsvPath(): string {
     const candidates = [
         path.join(process.cwd(), "data", "wiley_books.csv"),
@@ -107,14 +171,27 @@ export function getAllBooks(): Book[] {
         const content = fs.readFileSync(csvPath, "utf-8");
         const rows = parseCSV(content);
 
+        // Collect rows that still have HTTP image URLs so we can download them
+        const toDownload: Array<{ isbn: string; url: string }> = [];
+
         _books = rows.map((row) => {
             // wiley_books.csv uses "isbn" and "author" (singular) instead of "sku"/"authors"
             // Excel corrupts 13-digit ISBNs to scientific notation (e.g. 9.78937E+12).
             // The full ISBN is always embedded in the image_url filename — extract from there.
-            const imgFilename = (row["image_url"] || "").split("/").pop() || "";
+            const rawImageUrl = row["image_url"] || "";
+
+            // If the stored URL is still an external HTTP(S) URL, the image hasn't been
+            // downloaded yet. We'll use a local path derived from the ISBN once it has been.
+            const isHttp = rawImageUrl.startsWith("http");
+            const imgFilename = isHttp ? "" : (rawImageUrl.split("/").pop() || "");
             const isbnFromImg = imgFilename.replace(/(_\d+)?\.[^.]+$/, "");
             const rawIsbn = row["isbn"] || row["sku"] || row["s_k_u"] || "";
             const sku = /^\d{13}$/.test(isbnFromImg) ? isbnFromImg : rawIsbn;
+
+            if (isHttp && sku) {
+                toDownload.push({ isbn: sku, url: rawImageUrl });
+            }
+
             const title = row["title"] || "";
             // Price is now a plain number in the CSV
             const rawPrice = row["price"] || "0";
@@ -135,7 +212,9 @@ export function getAllBooks(): Book[] {
                 pages: parseInt(row["pages"] || "0", 10),
                 publicationYear: parseInt(row["publication_year"] || "0", 10),
                 category: row["category"] || "",
-                imageUrl: imgFilename ? `/images/books/${imgFilename}` : (row["image_url"] || ""),
+                // HTTP URLs: show no image (fallback) while background download runs.
+                // Local paths: construct the standard /images/books/{filename} URL.
+                imageUrl: isHttp ? "" : (imgFilename ? `/images/books/${imgFilename}` : rawImageUrl),
                 bookUrl: row["book_url"] || "",
                 description: row["description"] || "",
                 slug: sku,
@@ -144,6 +223,13 @@ export function getAllBooks(): Book[] {
                 discount,
             } as Book;
         });
+
+        // Fire-and-forget: download any images that are still external URLs.
+        // When each download completes, the CSV is updated and the cache is invalidated
+        // so the next request serves the correct local path.
+        for (const { isbn, url } of toDownload) {
+            downloadAndUpdateBookImage(csvPath, isbn, url).catch(console.error);
+        }
 
         return _books;
     } catch (error) {
