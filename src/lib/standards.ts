@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { Standard } from "@/types/standard";
+import { readCSV, writeCSV } from "@/lib/adminCsv";
 
 // ── CSV helpers (same as books.ts) ──────────────────────────────────────────
 function parseCSVLine(line: string): string[] {
@@ -49,13 +50,76 @@ let _standards: Standard[] | null = null;
 export function invalidateStandardsCache(): void {
     _standards = null;
 }
+// ── Background image downloader ───────────────────────────────────────────────
+const _downloadingStandards = new Set<string>();
 
+async function downloadAndUpdateStandardImage(
+    csvPath: string,
+    number: string,
+    imageUrl: string,
+): Promise<void> {
+    const key = `${number}::${imageUrl}`;
+    if (_downloadingStandards.has(key)) return;
+    _downloadingStandards.add(key);
+    try {
+        const destDir = path.join(process.cwd(), "public", "images", "standards");
+        fs.mkdirSync(destDir, { recursive: true });
+
+        const controller = new AbortController();
+        const timerId = setTimeout(() => controller.abort(), 20_000);
+        try {
+            const res = await fetch(imageUrl, { signal: controller.signal });
+            if (!res.ok) return;
+
+            const contentType = res.headers.get("content-type") ?? "";
+            let ext = ".jpg";
+            if (contentType.includes("png")) ext = ".png";
+            else if (contentType.includes("webp")) ext = ".webp";
+            else if (contentType.includes("gif")) ext = ".gif";
+            else {
+                const urlExt = imageUrl.split("?")[0].split(".").pop()?.toLowerCase();
+                if (urlExt && ["jpg", "jpeg", "png", "webp", "gif"].includes(urlExt))
+                    ext = `.${urlExt === "jpeg" ? "jpg" : urlExt}`;
+            }
+
+            const safeStem = number.replace(/[^a-zA-Z0-9_\-.]/g, "_");
+            const destPath = path.join(destDir, safeStem + ext);
+            fs.writeFileSync(destPath, Buffer.from(await res.arrayBuffer()));
+
+            const localPath = `/images/standards/${safeStem}${ext}`;
+
+            // Update the CSV row so the local path is persisted
+            const { headers, rows } = readCSV(csvPath);
+            let changed = false;
+            for (const row of rows) {
+                if ((row["Standard Number"] ?? "").trim() === number.trim() &&
+                    (row["Image_URL"] ?? "").startsWith("http")) {
+                    row["Image_URL"] = localPath;
+                    changed = true;
+                }
+            }
+            if (changed) {
+                writeCSV(csvPath, headers, rows);
+                invalidateStandardsCache();
+            }
+        } finally {
+            clearTimeout(timerId);
+        }
+    } catch (err) {
+        console.error(`Standard image download failed (${number}):`, err);
+    } finally {
+        _downloadingStandards.delete(key);
+    }
+}
 export function getAllStandards(): Standard[] {
     if (_standards) return _standards;
     try {
         const csvPath = path.join(process.cwd(), "data", "standards.csv");
         const content = fs.readFileSync(csvPath, "utf-8");
         const rows = parseCSV(content);
+
+        const toDownload: Array<{ number: string; url: string }> = [];
+
         _standards = rows.map((row) => {
             const rawPrice = row["price"] || "0";
             // Prefer the dedicated Currency column; fall back to extracting from the price string
@@ -66,6 +130,14 @@ export function getAllStandards(): Standard[] {
             const number = row["standard_number"] || row["standard_number_"] || Object.values(row)[0] || "";
             const rawDiscount = parseInt(row["discount"] || row["Discount"] || "0", 10);
             const discount = rawDiscount > 0 ? rawDiscount : undefined;
+
+            const rawImageUrl = row["image_url"] || "";
+            const isHttp = rawImageUrl.startsWith("http");
+
+            if (isHttp && number) {
+                toDownload.push({ number, url: rawImageUrl });
+            }
+
             return {
                 number,
                 name: row["standard_name"] || "",
@@ -74,11 +146,18 @@ export function getAllStandards(): Standard[] {
                 price,
                 currency,
                 description: row["description"] || "",
-                imageUrl: row["image_url"] || "",
+                // HTTP URLs: show no image (fallback) while background download runs.
+                imageUrl: isHttp ? "" : rawImageUrl,
                 slug: standardSlug(number),
                 discount,
             } as Standard;
         });
+
+        // Fire-and-forget downloads for any standards still using external image URLs
+        for (const { number, url } of toDownload) {
+            downloadAndUpdateStandardImage(csvPath, number, url).catch(console.error);
+        }
+
         return _standards;
     } catch (err) {
         console.error("Error reading standards CSV:", err);
