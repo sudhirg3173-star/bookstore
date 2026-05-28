@@ -16,6 +16,7 @@ export interface Book {
     rating: number;
     reviewCount: number;
     discount?: number;
+    visible: boolean;
 }
 
 export interface CartItem {

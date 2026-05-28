@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getAllBooks, getSubjects } from "@/lib/books";
+import { getPublicBooks, getSubjects } from "@/lib/books";
 import ProductGrid from "@/components/shop/ProductGrid";
 import ProductGridSkeleton from "@/components/shop/ProductGridSkeleton";
 
@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 export default function ShopPage() {
-    const books = getAllBooks();
+    const books = getPublicBooks();
     const subjects = getSubjects();
 
     return (

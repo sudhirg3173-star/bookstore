@@ -1,45 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
+import { SignJWT } from "jose";
 
 export const dynamic = "force-dynamic";
 
-/** Sign a value with HMAC-SHA256, returning a hex string. */
-async function sign(value: string): Promise<string> {
-    const secret = process.env.SESSION_SECRET ?? "fallback-secret";
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-        "raw",
-        encoder.encode(secret),
-        { name: "HMAC", hash: "SHA-256" },
-        false,
-        ["sign"]
-    );
-    const sig = await crypto.subtle.sign("HMAC", key, encoder.encode(value));
-    return Array.from(new Uint8Array(sig))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+const SESSION_DURATION_MS = 8 * 60 * 60 * 1000; // 8 hours
+
+function getSigningKey(): Uint8Array {
+    const email = process.env.ADMIN_EMAIL ?? "";
+    const password = process.env.ADMIN_PASSWORD ?? "";
+    return new TextEncoder().encode(`${email}:${password}`);
 }
 
 export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
-    const password = body?.password ?? "";
+    const email: string = body?.email ?? "";
+    const password: string = body?.password ?? "";
 
-    const expected = process.env.ADMIN_PASSWORD;
-    if (!expected || password !== expected) {
-        return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    if (!adminEmail || !adminPassword) {
+        return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
     }
 
-    const ts = Date.now().toString();
-    const token = `${ts}.${await sign(ts)}`;
+    if (email !== adminEmail || password !== adminPassword) {
+        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+    }
 
-    const res = NextResponse.json({ success: true });
-    res.cookies.set("admin_session", token, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        // 8 hours
-        maxAge: 60 * 60 * 8,
-        // secure in production only
-        secure: process.env.NODE_ENV === "production",
-    });
-    return res;
+    try {
+        const token = await new SignJWT({ email })
+            .setProtectedHeader({ alg: "HS256" })
+            .setIssuedAt()
+            .setExpirationTime("8h")
+            .sign(getSigningKey());
+
+        const res = NextResponse.json({ success: true });
+        res.cookies.set("admin_session", token, {
+            httpOnly: true,
+            sameSite: "lax",
+            path: "/",
+            maxAge: SESSION_DURATION_MS / 1000,
+            secure: process.env.NODE_ENV === "production",
+        });
+        return res;
+    } catch {
+        return NextResponse.json({ error: "Failed to create session" }, { status: 500 });
+    }
 }

@@ -201,6 +201,10 @@ export function getAllBooks(): Book[] {
             const rawDiscount = parseInt(row["discount"] || row["Discount"] || "0", 10);
             const discount = rawDiscount > 0 ? rawDiscount : undefined;
 
+            // Visibility: explicit CSV flag takes precedence; default to price > 0
+            const visibleRaw = (row["visible"] || row["Visible"] || "").toLowerCase();
+            const visible = visibleRaw === "false" ? false : visibleRaw === "true" ? true : price > 0;
+
             return {
                 subject: row["subject"] || "",
                 title,
@@ -221,6 +225,7 @@ export function getAllBooks(): Book[] {
                 rating,
                 reviewCount,
                 discount,
+                visible,
             } as Book;
         });
 
@@ -242,14 +247,19 @@ export function getBookBySku(sku: string): Book | undefined {
     return getAllBooks().find((b) => b.slug === sku);
 }
 
+/** Returns only books marked as visible (used by all storefront pages). */
+export function getPublicBooks(): Book[] {
+    return getAllBooks().filter((b) => b.visible);
+}
+
 export function getBooksBySubject(subject: string): Book[] {
-    return getAllBooks().filter(
+    return getPublicBooks().filter(
         (b) => b.subject.toLowerCase() === subject.toLowerCase()
     );
 }
 
 export function getSubjects(): string[] {
-    const subjects = new Set(getAllBooks().map((b) => b.subject));
+    const subjects = new Set(getPublicBooks().map((b) => b.subject));
     const all = Array.from(subjects).filter(Boolean).sort();
     const pinned = "New Releases";
     return all.includes(pinned) ? [pinned, ...all.filter((s) => s !== pinned)] : all;
@@ -269,7 +279,7 @@ export function getCategories(): string[] {
 }
 
 export function getNewReleases(limit?: number): Book[] {
-    const books = getAllBooks().filter((b) => b.subject === "New Releases");
+    const books = getPublicBooks().filter((b) => b.subject === "New Releases");
     return limit ? books.slice(0, limit) : books;
 }
 
@@ -284,7 +294,7 @@ export function getTrendingBooks(limit = 8): Book[] {
         return [];
     }
 
-    const bookMap = new Map(getAllBooks().map((b) => [b.sku, b]));
+    const bookMap = new Map(getPublicBooks().map((b) => [b.sku, b]));
     return skus
         .slice(0, limit)
         .map((sku) => bookMap.get(sku))
@@ -292,19 +302,19 @@ export function getTrendingBooks(limit = 8): Book[] {
 }
 
 export function getFeaturedBooks(limit = 8): Book[] {
-    return getAllBooks()
+    return getPublicBooks()
         .filter((b) => b.availability === "In Stock" && b.discount !== undefined)
         .slice(0, limit);
 }
 
 export function getBooksOfMonth(limit = 6): Book[] {
-    return getAllBooks()
+    return getPublicBooks()
         .filter((b) => b.subject === "New Releases" || b.subject === "Emerging Technologies")
         .slice(0, limit);
 }
 
 export function getTopBooks(limit = 8): Book[] {
-    return getAllBooks()
+    return getPublicBooks()
         .filter((b) => b.availability === "In Stock")
         .sort((a, b) => b.rating - a.rating)
         .slice(0, limit);
@@ -314,7 +324,7 @@ export function searchBooks(query: string): Book[] {
     if (!query.trim()) return [];
     const q = query.toLowerCase().replace(/[-\s]/g, "");
     const normalize = (s: string) => s.toLowerCase().replace(/[-\s]/g, "");
-    return getAllBooks().filter(
+    return getPublicBooks().filter(
         (b) =>
             normalize(b.title).includes(q) ||
             normalize(b.authors).includes(q) ||

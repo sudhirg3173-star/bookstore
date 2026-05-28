@@ -7,7 +7,7 @@ import {
     Plus, Pencil, Trash2, Search, X, BookOpen, Award,
     ChevronLeft, ChevronRight, Loader2, AlertCircle, CheckCircle2,
     Upload, ImageIcon, LogOut, ArrowUpDown, ArrowUp, ArrowDown,
-    FileUp, CheckCircle, Info,
+    FileUp, CheckCircle, Info, Users, Eye, EyeOff,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -36,6 +36,7 @@ const BOOK_LABELS: Record<string, string> = {
     Image_URL: "Image URL",
     Book_URL: "Book URL",
     Description: "Description",
+    Visible: "Visible",
     Updated_At: "Updated",
 };
 
@@ -49,11 +50,12 @@ const STANDARD_LABELS: Record<string, string> = {
     Discount: "Discount (%)",
     Image_URL: "Image URL",
     Description: "Description",
+    Visible: "Visible",
     Updated_At: "Updated",
 };
 
-const BOOK_TABLE_COLS = ["Title", "Author", "Subject", "Category", "Currency", "Price", "Publication_Year", "Updated_At"];
-const STANDARD_TABLE_COLS = ["Standard Number", "Standard Name", "PUBLISHER", "YEAR", "Currency", "Price", "Updated_At"];
+const BOOK_TABLE_COLS = ["Title", "Author", "Subject", "Category", "Currency", "Price", "Publication_Year", "Visible", "Updated_At"];
+const STANDARD_TABLE_COLS = ["Standard Number", "Standard Name", "PUBLISHER", "YEAR", "Currency", "Price", "Visible", "Updated_At"];
 
 // All table columns are sortable
 const SORTABLE_BOOK_COLS = new Set(BOOK_TABLE_COLS);
@@ -292,6 +294,20 @@ function Modal({
         if (!row && !init["Currency"]) init["Currency"] = "INR";
         // Default Discount to 0
         if (!init["Discount"]) init["Discount"] = "0";
+        // Default Visible: use saved value if present;
+        // for new entries default to true; for existing entries without Visible, infer from price
+        const savedVisible = row?.["Visible"] ?? "";
+        if (!savedVisible) {
+            if (!row) {
+                // New entry — visible by default
+                init["Visible"] = "true";
+            } else {
+                const priceNum = parseFloat(init["Price"] || "0");
+                init["Visible"] = priceNum > 0 ? "true" : "false";
+            }
+        } else {
+            init["Visible"] = savedVisible;
+        }
         return init;
     });
 
@@ -335,8 +351,8 @@ function Modal({
                             onUploaded={handleUploaded}
                         />
 
-                        {/* Text / dropdown fields (Updated_At is auto-managed, not shown) */}
-                        {headers.filter((h) => h !== "Updated_At").map((h) => (
+                        {/* Text / dropdown fields (Updated_At and Visible are handled separately) */}
+                        {headers.filter((h) => h !== "Updated_At" && h !== "Visible").map((h) => (
                             <div key={h}>
                                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
                                     {labels[h] ?? h}
@@ -397,6 +413,29 @@ function Modal({
                                 )}
                             </div>
                         ))}
+
+                        {/* Visibility toggle */}
+                        <div>
+                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                                Visibility
+                            </label>
+                            <button
+                                type="button"
+                                onClick={() => setForm((f) => ({ ...f, Visible: f["Visible"] === "false" ? "true" : "false" }))}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors
+                                    ${form["Visible"] === "false"
+                                        ? "border-gray-200 bg-gray-50 text-gray-500 hover:bg-gray-100"
+                                        : "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"}`}
+                            >
+                                {form["Visible"] === "false"
+                                    ? <><EyeOff className="w-4 h-4" /> Hidden from shop</>
+                                    : <><Eye className="w-4 h-4" /> Visible in shop</>
+                                }
+                            </button>
+                            {form["Visible"] === "false" && parseFloat(form["Price"] || "0") === 0 && (
+                                <p className="text-xs text-amber-600 mt-1.5">Auto-hidden because price is ₹0</p>
+                            )}
+                        </div>
                     </div>
 
                     {/* Footer */}
@@ -797,6 +836,9 @@ export default function ControlCenterClient() {
     // Toast
     const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
+    // Visibility toggle loading state
+    const [togglingIndex, setTogglingIndex] = useState<number | null>(null);
+
     const apiBase = tab === "books" ? "/api/admin/books" : "/api/admin/standards";
     const labels = tab === "books" ? BOOK_LABELS : STANDARD_LABELS;
     const tableCols = tab === "books" ? BOOK_TABLE_COLS : STANDARD_TABLE_COLS;
@@ -914,6 +956,31 @@ export default function ControlCenterClient() {
         }
     };
 
+    // ── Visibility toggle ─────────────────────────────────────────────────────
+
+    const handleToggleVisibility = async (row: Row) => {
+        const current = row["Visible"];
+        const newVisible = current === "false" ? "true" : "false";
+        // Optimistic update
+        setData((d) => d ? { ...d, rows: d.rows.map((r) => r._index === row._index ? { ...r, Visible: newVisible } : r) } : d);
+        setTogglingIndex(row._index);
+        try {
+            const res = await fetch(`${apiBase}/${row._index}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ Visible: newVisible }),
+            });
+            if (!res.ok) throw new Error();
+            setToast({ message: newVisible === "true" ? "Now visible in shop" : "Hidden from shop", type: "success" });
+        } catch {
+            // Revert on failure
+            setData((d) => d ? { ...d, rows: d.rows.map((r) => r._index === row._index ? { ...r, Visible: current } : r) } : d);
+            setToast({ message: "Failed to update visibility", type: "error" });
+        } finally {
+            setTogglingIndex(null);
+        }
+    };
+
     // ── Delete ───────────────────────────────────────────────────────────────
 
     const handleDelete = async () => {
@@ -977,6 +1044,12 @@ export default function ControlCenterClient() {
                             {t === "books" ? "Books" : "Standards"}
                         </button>
                     ))}
+                    <button
+                        onClick={() => router.push("/controlCenter/users")}
+                        className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all"
+                    >
+                        <Users className="w-4 h-4" />Users
+                    </button>
                 </div>
 
                 {/* Toolbar */}
@@ -1058,8 +1131,22 @@ export default function ControlCenterClient() {
                                         {pageRows.map((row) => (
                                             <tr key={row._index} className="hover:bg-gray-50 transition-colors">
                                                 {tableCols.map((col) => (
-                                                    <td key={col} className="px-4 py-3 text-gray-700 max-w-[220px] truncate" title={row[col]}>
-                                                        {col === "Updated_At"
+                                                    <td key={col} className={`px-4 py-3 ${col === "Visible" ? "" : "text-gray-700 max-w-[220px] truncate"}`} title={col !== "Visible" ? (row[col] ?? "") : undefined}>
+                                                        {col === "Visible" ? (
+                                                            <button
+                                                                onClick={() => handleToggleVisibility(row)}
+                                                                disabled={togglingIndex === row._index}
+                                                                title={row["Visible"] === "false" ? "Hidden — click to show" : "Visible — click to hide"}
+                                                                className="p-1 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50"
+                                                            >
+                                                                {togglingIndex === row._index
+                                                                    ? <Loader2 className="w-4 h-4 animate-spin text-gray-400" />
+                                                                    : row["Visible"] === "false"
+                                                                        ? <EyeOff className="w-4 h-4 text-gray-400" />
+                                                                        : <Eye className="w-4 h-4 text-emerald-500" />
+                                                                }
+                                                            </button>
+                                                        ) : col === "Updated_At"
                                                             ? <span className="text-gray-500 text-xs">{formatDateTime(row[col], defaultTimestamp.current)}</span>
                                                             : (row[col] || <span className="text-gray-300">—</span>)
                                                         }

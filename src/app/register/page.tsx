@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -23,10 +23,11 @@ export default function RegisterPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    if (isAuthenticated) {
-        router.replace("/account");
-        return null;
-    }
+    useEffect(() => {
+        if (isAuthenticated) router.replace("/account");
+    }, [isAuthenticated, router]);
+
+    if (isAuthenticated) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

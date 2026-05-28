@@ -6,6 +6,7 @@ import { Lock, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react";
 
 export default function AdminLoginPage() {
     const router = useRouter();
+    const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -15,18 +16,19 @@ export default function AdminLoginPage() {
         e.preventDefault();
         setError(null);
         setLoading(true);
+
         try {
             const res = await fetch("/api/admin/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ password }),
+                body: JSON.stringify({ email, password }),
             });
+
             if (res.ok) {
                 router.push("/controlCenter");
                 router.refresh();
             } else {
-                setError("Incorrect password. Please try again.");
-                setPassword("");
+                setError("Incorrect email or password. Please try again.");
             }
         } catch {
             setError("Network error. Please try again.");
@@ -51,14 +53,29 @@ export default function AdminLoginPage() {
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                                Admin Password
+                                Email
+                            </label>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="admin@example.com"
+                                autoComplete="email"
+                                required
+                                className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                                Password
                             </label>
                             <div className="relative">
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="Enter admin password"
+                                    placeholder="Enter password"
                                     autoComplete="current-password"
                                     required
                                     className="w-full border border-gray-200 rounded-lg px-4 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
@@ -83,7 +100,7 @@ export default function AdminLoginPage() {
 
                         <button
                             type="submit"
-                            disabled={loading || !password}
+                            disabled={loading || !email || !password}
                             className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors disabled:opacity-60 text-sm"
                         >
                             {loading && <Loader2 className="w-4 h-4 animate-spin" />}

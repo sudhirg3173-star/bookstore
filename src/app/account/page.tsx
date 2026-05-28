@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -31,9 +31,10 @@ export default function AccountPage() {
     const [storeName, setStoreName] = useState("");
     const [authorBio, setAuthorBio] = useState("");
     const [saved, setSaved] = useState(false);
+    const loggingOutRef = useRef(false);
 
     useEffect(() => {
-        if (!isAuthenticated) {
+        if (!isAuthenticated && !loggingOutRef.current) {
             router.replace("/login");
         } else if (user) {
             setName(user.name);
@@ -59,8 +60,9 @@ export default function AccountPage() {
         setTimeout(() => setSaved(false), 2500);
     };
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        loggingOutRef.current = true;
+        await logout();
         router.push("/");
     };
 

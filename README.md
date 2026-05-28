@@ -49,6 +49,37 @@ Open [http://localhost:3000](http://localhost:3000)
 | **Wishlist** | Persistent bookmarks, add all to cart, remove items |
 | **Search** | Full-text search across title, author, subject, and description |
 
+## 🔑 Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in the values.
+
+| Variable | Required | Description |
+|---|---|---|
+| `NEXT_PUBLIC_APP_URL` | Yes | Public site URL |
+| `INSTAMOJO_API_KEY` | Yes | Instamojo payment key |
+| `INSTAMOJO_AUTH_TOKEN` | Yes | Instamojo auth token |
+| `INSTAMOJO_API_URL` | Yes | Instamojo API base URL |
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | Yes | Firebase Client API key |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Yes | Firebase auth domain |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Yes | Firebase project ID |
+| `FIREBASE_ADMIN_PROJECT_ID` | Yes | Firebase Admin project ID |
+| `FIREBASE_ADMIN_CLIENT_EMAIL` | Yes | Service account email |
+| `FIREBASE_ADMIN_PRIVATE_KEY` | Yes | Service account private key (base64-encoded) |
+| `ADMIN_EMAIL` | Yes | Email of the sole authorized admin user |
+| `DB_SERVER` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` / `DB_PORT` | Optional | SQL Server connection |
+
+### Firebase Setup
+
+1. Go to [Firebase Console](https://console.firebase.google.com) → Create project
+2. **Authentication** → Sign-in method → Enable **Email/Password**
+3. **Authentication** → Users → Add user (set `ADMIN_EMAIL` to this email)
+4. **Project Settings** → Service Accounts → **Generate new private key** → download JSON
+5. Base64-encode the `private_key` field from the JSON:
+   ```bash
+   node -e "process.stdout.write(Buffer.from(require('./serviceAccount.json').private_key).toString('base64'))"
+   ```
+6. Set `FIREBASE_ADMIN_PRIVATE_KEY` to the base64 string in `.env.local`
+
 ## 🛠 Tech Stack
 
 - **Next.js 14** (App Router)

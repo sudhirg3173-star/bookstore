@@ -73,8 +73,8 @@ export default function Header({ subjects }: { subjects: string[] }) {
         }
     };
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        await logout();
         setUserMenuOpen(false);
         router.push("/");
     };

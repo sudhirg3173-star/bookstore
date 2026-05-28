@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import AuthProvider from "@/components/AuthProvider";
 import { getSubjects } from "@/lib/books";
 import { headers } from "next/headers";
 
@@ -27,9 +28,11 @@ export default async function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <body className="min-h-screen flex flex-col bg-white">
-                {!isAdmin && <Header subjects={subjects} />}
-                <main className="flex-1">{children}</main>
-                {!isAdmin && <Footer subjects={subjects} />}
+                <AuthProvider>
+                    {!isAdmin && <Header subjects={subjects} />}
+                    <main className="flex-1">{children}</main>
+                    {!isAdmin && <Footer subjects={subjects} />}
+                </AuthProvider>
             </body>
         </html>
     );

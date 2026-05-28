@@ -1,38 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
+import { jwtVerify } from "jose";
 
-/** Verify a session token using Web Crypto API (Edge Runtime compatible). */
-async function isValidToken(token: string): Promise<boolean> {
-    const secret = process.env.SESSION_SECRET ?? "fallback-secret";
-    const dotIdx = token.lastIndexOf(".");
-    if (dotIdx === -1) return false;
-    const ts = token.slice(0, dotIdx);
-    const hmac = token.slice(dotIdx + 1);
-    if (!ts || !hmac) return false;
+function getSigningKey(): Uint8Array {
+    const email = process.env.ADMIN_EMAIL ?? "";
+    const password = process.env.ADMIN_PASSWORD ?? "";
+    return new TextEncoder().encode(`${email}:${password}`);
+}
 
+/** Verify the admin session JWT (HS256, signed with ADMIN_EMAIL:ADMIN_PASSWORD). */
+async function isValidSessionCookie(token: string): Promise<boolean> {
+    if (!token) return false;
     try {
-        const encoder = new TextEncoder();
-        const key = await crypto.subtle.importKey(
-            "raw",
-            encoder.encode(secret),
-            { name: "HMAC", hash: "SHA-256" },
-            false,
-            ["verify"]
-        );
-        const hmacBytes = new Uint8Array(
-            (hmac.match(/.{2}/g) ?? []).map((b) => parseInt(b, 16))
-        );
-        const valid = await crypto.subtle.verify(
-            "HMAC",
-            key,
-            hmacBytes,
-            encoder.encode(ts)
-        );
-        if (!valid) return false;
-
-        // Check token age — max 8 hours
-        const age = Date.now() - parseInt(ts, 10);
-        if (isNaN(age) || age > 8 * 60 * 60 * 1000) return false;
-
+        await jwtVerify(token, getSigningKey());
         return true;
     } catch {
         return false;
@@ -48,7 +27,7 @@ export async function middleware(req: NextRequest) {
         !pathname.startsWith("/controlCenter/login")
     ) {
         const token = req.cookies.get("admin_session")?.value ?? "";
-        if (!(await isValidToken(token))) {
+        if (!(await isValidSessionCookie(token))) {
             const loginUrl = req.nextUrl.clone();
             loginUrl.pathname = "/controlCenter/login";
             return NextResponse.redirect(loginUrl);

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
-import { getAllBooks, getBooksBySubject, getSubjects, subjectToSlug, slugToSubject } from "@/lib/books";
+import { getBooksBySubject, getSubjects, subjectToSlug, slugToSubject } from "@/lib/books";
 import ProductGrid from "@/components/shop/ProductGrid";
 import ProductGridSkeleton from "@/components/shop/ProductGridSkeleton";
 
