@@ -4,31 +4,6 @@ import { Book } from "@/types/book";
 import { getBookRating, getReviewCount } from "@/lib/utils";
 import { readCSV, writeCSV } from "@/lib/adminCsv";
 
-function parseCSVLine(line: string): string[] {
-    const result: string[] = [];
-    let current = "";
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-        const char = line[i];
-        if (char === '"') {
-            if (inQuotes && line[i + 1] === '"') {
-                current += '"';
-                i++;
-            } else {
-                inQuotes = !inQuotes;
-            }
-        } else if (char === "," && !inQuotes) {
-            result.push(current.trim());
-            current = "";
-        } else {
-            current += char;
-        }
-    }
-    result.push(current.trim());
-    return result;
-}
-
 function parseCSV(content: string): Record<string, string>[] {
     // Character-level parse — correctly handles quoted fields with embedded newlines
     const allRows: string[][] = [];

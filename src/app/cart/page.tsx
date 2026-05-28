@@ -17,7 +17,7 @@ function toINR(price: number, fromCurrency: string, rates: Record<string, number
 }
 
 export default function CartPage() {
-    const { items, removeItem, updateQuantity, clearCart, getTotal, getItemCount } =
+    const { items, removeItem, updateQuantity, clearCart, getItemCount } =
         useCartStore();
     const [promoCode, setPromoCode] = useState("");
     const [promoApplied, setPromoApplied] = useState(false);

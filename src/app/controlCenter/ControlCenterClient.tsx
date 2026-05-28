@@ -962,7 +962,7 @@ export default function ControlCenterClient() {
         const current = row["Visible"];
         const newVisible = current === "false" ? "true" : "false";
         // Optimistic update
-        setData((d) => d ? { ...d, rows: d.rows.map((r) => r._index === row._index ? { ...r, Visible: newVisible } : r) } : d);
+        setData((d) => d ? { ...d, rows: d.rows.map((r) => r._index === row._index ? { ...r, Visible: newVisible } as unknown as Row : r) } : d);
         setTogglingIndex(row._index);
         try {
             const res = await fetch(`${apiBase}/${row._index}`, {
@@ -974,7 +974,7 @@ export default function ControlCenterClient() {
             setToast({ message: newVisible === "true" ? "Now visible in shop" : "Hidden from shop", type: "success" });
         } catch {
             // Revert on failure
-            setData((d) => d ? { ...d, rows: d.rows.map((r) => r._index === row._index ? { ...r, Visible: current } : r) } : d);
+            setData((d) => d ? { ...d, rows: d.rows.map((r) => r._index === row._index ? { ...r, Visible: current } as unknown as Row : r) } : d);
             setToast({ message: "Failed to update visibility", type: "error" });
         } finally {
             setTogglingIndex(null);

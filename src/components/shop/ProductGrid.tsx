@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Book } from "@/types/book";
 import ProductCard from "@/components/shop/ProductCard";
 import ShopSidebar from "@/components/shop/ShopSidebar";
@@ -251,10 +252,11 @@ function ListCard({ book }: { book: Book }) {
         >
             {/* Cover */}
             <div className="w-20 h-28 flex-shrink-0 bg-gray-50 rounded-lg overflow-hidden relative border border-gray-100">
-                <img
+                <Image
                     src={book.imageUrl}
                     alt={book.title}
-                    className="w-full h-full object-contain p-1"
+                    fill
+                    className="object-contain p-1"
                     onError={(e) => {
                         (e.target as HTMLImageElement).style.display = "none";
                     }}

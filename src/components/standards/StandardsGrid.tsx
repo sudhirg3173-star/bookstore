@@ -6,7 +6,6 @@ import StandardCard from "@/components/standards/StandardCard";
 import { LayoutGrid, List, SlidersHorizontal, X, FileText, ShoppingCart } from "lucide-react";
 import { standardToBook } from "@/lib/standardUtils";
 import { useCartStore } from "@/store/cartStore";
-import { useWishlistStore } from "@/store/wishlistStore";
 import { formatPrice } from "@/store/currencyStore";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -22,7 +21,6 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const addToCart = useCartStore((s) => s.addItem);
-    const toggleWishlist = useWishlistStore((s) => s.toggleItem);
 
     const publishers = useMemo(() => {
         const set = new Set(standards.map((s) => s.publisher));

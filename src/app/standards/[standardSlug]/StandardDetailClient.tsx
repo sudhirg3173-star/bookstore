@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import {
     ShoppingCart, Heart, FileText, Award, ArrowLeft,
-    Calendar, Building2, Hash, BookOpen,
+    Calendar, Building2, Hash,
 } from "lucide-react";
 import { Standard } from "@/types/standard";
 import { standardToBook } from "@/lib/standardUtils";

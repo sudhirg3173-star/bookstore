@@ -74,7 +74,7 @@ interface BillingForm {
 
 export default function CheckoutPage() {
     const router = useRouter();
-    const { items, getTotal, clearCart } = useCartStore();
+    const { items, clearCart } = useCartStore();
     const [scriptLoaded, setScriptLoaded] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);

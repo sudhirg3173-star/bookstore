@@ -4,10 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Mail, Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 
-const subjectSlug = (s: string) =>
-    s.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-
-export default function Footer({ subjects }: { subjects: string[] }) {
+export default function Footer({ subjects: _subjects }: { subjects: string[] }) {
     return (
         <footer className="bg-[#21285E] text-gray-300">
             {/* Features strip */}

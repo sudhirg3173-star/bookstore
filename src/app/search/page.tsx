@@ -10,7 +10,6 @@ interface Props {
 }
 
 export function generateMetadata({ searchParams }: Props) {
-    const label = searchParams.type === "standards" ? "Standard" : "Book";
     return {
         title: searchParams.q
             ? `Search: "${searchParams.q}" — Kabdwalbook`

@@ -2,24 +2,13 @@ import HeroBanner from "@/components/home/HeroBanner";
 import PromoBanner from "@/components/home/PromoBanner";
 import TrendingBooks from "@/components/home/TrendingBooks";
 import TopCategories from "@/components/home/TopCategories";
-import BooksOfMonth from "@/components/home/BooksOfMonth";
-import AdventureBanner from "@/components/home/AdventureBanner";
-import TopBooksSection from "@/components/home/TopBooksSection";
 import TrendingStandards from "@/components/home/TrendingStandards";
 import Testimonials from "@/components/home/Testimonials";
-import {
-    getTrendingBooks,
-    getBooksOfMonth,
-    getTopBooks,
-    getNewReleases,
-} from "@/lib/books";
+import { getTrendingBooks } from "@/lib/books";
 import { getTrendingStandards } from "@/lib/standards";
 
 export default function HomePage() {
     const trending = getTrendingBooks(8);
-    const booksOfMonth = getBooksOfMonth(3);
-    const topBooks = getTopBooks(8);
-    const newReleases = getNewReleases(8);
     const standards = getTrendingStandards();
 
     return (

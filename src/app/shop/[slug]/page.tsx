@@ -1,7 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
-import { getBookBySku, getRelatedBooks } from "@/lib/books";
-import ProductDetailClient from "./ProductDetailClient";
+import { getBookBySku } from "@/lib/books";
 import { getBookUrl } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";

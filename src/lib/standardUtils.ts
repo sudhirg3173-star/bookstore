@@ -26,5 +26,6 @@ export function standardToBook(s: Standard): Book {
         slug: "std-" + s.slug,
         rating: getBookRating("std-" + s.slug),
         reviewCount: getReviewCount("std-" + s.slug),
+        visible: true,
     };
 }

@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { ShoppingCart, Heart, Share2, Star, Package, BookOpen, Calendar } from "lucide-react";
+import { ShoppingCart, Heart, Share2, Package, BookOpen, Calendar } from "lucide-react";
 import { Book } from "@/types/book";
 import { formatPrice } from "@/store/currencyStore";
 import { useCartStore } from "@/store/cartStore";

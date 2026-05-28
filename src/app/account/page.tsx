@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-    User, Mail, BookOpen, ShoppingBag, PenLine, LogOut,
+    Mail, BookOpen, ShoppingBag, PenLine, LogOut,
     ShoppingCart, Heart, Edit2, Save, X, Package, Store,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";

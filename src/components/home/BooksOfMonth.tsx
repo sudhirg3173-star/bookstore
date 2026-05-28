@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, Heart } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { Book } from "@/types/book";
 import StarRating from "@/components/ui/StarRating";
 import { useCartStore } from "@/store/cartStore";
