@@ -10,7 +10,7 @@ import {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Role = "buyer" | "seller";
+type Role = "buyer" | "seller" | "author";
 
 interface UserRow {
     id: string;
@@ -66,7 +66,7 @@ function EditModal({
     onSaved: (uid: string, updates: { name: string; role: Role }) => void;
 }) {
     const [name, setName] = useState(user.name);
-    const [role, setRole] = useState<Role>(user.role === "seller" ? "seller" : "buyer");
+    const [role, setRole] = useState<Role>(["buyer", "seller", "author"].includes(user.role) ? user.role as Role : "buyer");
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -139,6 +139,7 @@ function EditModal({
                     >
                         <option value="buyer">Buyer</option>
                         <option value="seller">Seller</option>
+                        <option value="author">Author</option>
                     </select>
                 </div>
 

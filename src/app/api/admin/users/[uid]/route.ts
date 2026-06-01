@@ -12,8 +12,8 @@ export async function PATCH(
         const body = await req.json().catch(() => ({}));
         const { name, email, role } = body as { name?: string; email?: string; role?: string };
 
-        if (role !== undefined && !["buyer", "seller"].includes(role)) {
-            return NextResponse.json({ error: "Invalid role. Must be 'buyer' or 'seller'." }, { status: 400 });
+        if (role !== undefined && !["buyer", "seller", "author"].includes(role)) {
+            return NextResponse.json({ error: "Invalid role. Must be 'buyer', 'seller', or 'author'." }, { status: 400 });
         }
         if (email !== undefined && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             return NextResponse.json({ error: "Invalid email address." }, { status: 400 });
