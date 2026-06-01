@@ -106,6 +106,7 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
                             onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
                             className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-primary"
                         >
+                            <option value="default">Default sorting</option>
                             <option value="year-new">Newest first</option>
                             <option value="year-old">Oldest first</option>
                             <option value="price-asc">Price: low to high</option>
