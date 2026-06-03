@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
     Mail, BookOpen, ShoppingBag, PenLine, LogOut,
     ShoppingCart, Heart, Edit2, Save, X, Package, Store,
+    FileText, Coins,
 } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
@@ -112,11 +113,14 @@ export default function AccountPage() {
                 )}
 
                 {/* Stats row */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className={`grid gap-4 ${user.role === "seller" || user.role === "author" ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"
+                    }`}>
                     {[
                         { icon: <ShoppingCart className="w-5 h-5" />, label: "Cart Items", value: cartCount, href: "/cart" },
                         { icon: <Heart className="w-5 h-5" />, label: "Wishlisted", value: wishlistCount, href: "/wishlist" },
                         { icon: <Package className="w-5 h-5" />, label: "Orders", value: 0, href: "#" },
+                        ...(user.role === "seller" ? [{ icon: <FileText className="w-5 h-5" />, label: "Invoices", value: 0, href: "#" }] : []),
+                        ...(user.role === "author" ? [{ icon: <Coins className="w-5 h-5" />, label: "Royalty", value: "₹0", href: "#" }] : []),
                     ].map((stat) => (
                         <Link
                             key={stat.label}
@@ -288,6 +292,24 @@ export default function AccountPage() {
                         <p className="text-xs text-gray-400 mt-4">
                             Listings and order management coming soon.
                         </p>
+
+                        {/* Invoices section */}
+                        <div className="mt-6 border-t border-gray-100 pt-5">
+                            <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <FileText className="w-4 h-4 text-emerald-500" /> Invoices
+                            </h3>
+                            <div className="rounded-xl border border-gray-100 overflow-hidden">
+                                <div className="grid grid-cols-4 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    <span>Invoice #</span>
+                                    <span>Date</span>
+                                    <span>Amount</span>
+                                    <span>Status</span>
+                                </div>
+                                <div className="px-4 py-6 text-center text-sm text-gray-400 italic">
+                                    No invoices yet.
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -311,6 +333,36 @@ export default function AccountPage() {
                         <p className="text-xs text-gray-400 mt-4">
                             Book publishing tools coming soon.
                         </p>
+
+                        {/* Royalty section */}
+                        <div className="mt-6 border-t border-gray-100 pt-5">
+                            <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <Coins className="w-4 h-4 text-purple-500" /> Royalty Earnings
+                            </h3>
+                            <div className="grid grid-cols-3 gap-4 mb-4">
+                                {[
+                                    { label: "Total Earned", value: "₹0" },
+                                    { label: "This Month", value: "₹0" },
+                                    { label: "Pending Payout", value: "₹0" },
+                                ].map((s) => (
+                                    <div key={s.label} className="bg-purple-50 border border-purple-100 rounded-xl p-4 text-center">
+                                        <div className="text-lg font-extrabold text-purple-700">{s.value}</div>
+                                        <div className="text-xs text-purple-600 mt-0.5">{s.label}</div>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="rounded-xl border border-gray-100 overflow-hidden">
+                                <div className="grid grid-cols-4 bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    <span>Book</span>
+                                    <span>Sales</span>
+                                    <span>Rate</span>
+                                    <span>Earned</span>
+                                </div>
+                                <div className="px-4 py-6 text-center text-sm text-gray-400 italic">
+                                    No royalty records yet.
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
 
