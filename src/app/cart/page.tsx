@@ -19,8 +19,8 @@ function toINR(price: number, fromCurrency: string, rates: Record<string, number
 export default function CartPage() {
     const { items, removeItem, updateQuantity, clearCart, getItemCount } =
         useCartStore();
-    const [promoCode, setPromoCode] = useState("");
-    const [promoApplied, setPromoApplied] = useState(false);
+    // const [promoCode, setPromoCode] = useState("");
+    // const [promoApplied, setPromoApplied] = useState(false);
 
     // Live exchange rates (base = INR)
     const [rates, setRates] = useState<Record<string, number>>({ INR: 1 });
@@ -41,7 +41,8 @@ export default function CartPage() {
         return sum + toINR(unitPrice * item.quantity, item.book.currency, rates);
     }, 0);
 
-    const discountINR = promoApplied ? subtotalINR * 0.2 : 0;
+    // const discountINR = promoApplied ? subtotalINR * 0.2 : 0;
+    const discountINR = 0;
     const afterDiscountINR = subtotalINR - discountINR;
     const shippingINR = afterDiscountINR > 999 ? 0 : 99;
     const totalINR = afterDiscountINR + shippingINR;
@@ -51,11 +52,11 @@ export default function CartPage() {
         new Set(items.map((i) => i.book.currency.toUpperCase()).filter((c) => c !== "INR"))
     );
 
-    const handlePromo = () => {
-        if (promoCode.toUpperCase() === "KWB20") {
-            setPromoApplied(true);
-        }
-    };
+    // const handlePromo = () => {
+    //     if (promoCode.toUpperCase() === "KWB20") {
+    //         setPromoApplied(true);
+    //     }
+    // };
 
     if (items.length === 0) {
         return (
@@ -257,7 +258,7 @@ export default function CartPage() {
                             </div>
 
                             {/* Promo code */}
-                            <div className="mb-5">
+                            {/* <div className="mb-5">
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
@@ -280,7 +281,7 @@ export default function CartPage() {
                                         ✓ 20% discount applied!
                                     </p>
                                 )}
-                            </div>
+                            </div> */}
 
                             <Link
                                 href="/checkout"
