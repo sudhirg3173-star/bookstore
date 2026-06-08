@@ -257,7 +257,7 @@ export default function CartPage() {
                             </div>
 
                             {/* Promo code */}
-                            <div className="mb-5">
+                            {/* <div className="mb-5">
                                 <div className="flex gap-2">
                                     <input
                                         type="text"
@@ -280,7 +280,7 @@ export default function CartPage() {
                                         ✓ 20% discount applied!
                                     </p>
                                 )}
-                            </div>
+                            </div> */}
 
                             <Link
                                 href="/checkout"
