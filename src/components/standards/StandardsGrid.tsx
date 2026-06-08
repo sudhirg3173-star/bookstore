@@ -17,7 +17,7 @@ interface StandardsGridProps {
 export default function StandardsGrid({ standards }: StandardsGridProps) {
     const [view, setView] = useState<"grid" | "list">("grid");
     const [selectedPublisher, setSelectedPublisher] = useState<string>("all");
-    const [sortBy, setSortBy] = useState<"default" | "price-asc" | "price-desc" | "year-new" | "year-old">("default");
+    const [sortBy, setSortBy] = useState<"default" | "price-asc" | "price-desc" | "year-new" | "year-old">("year-new");
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const addToCart = useCartStore((s) => s.addItem);

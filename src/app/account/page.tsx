@@ -116,9 +116,9 @@ export default function AccountPage() {
                 <div className={`grid gap-4 ${user.role === "seller" || user.role === "author" ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"
                     }`}>
                     {[
-                        { icon: <ShoppingCart className="w-5 h-5" />, label: "Cart Items", value: cartCount, href: "/cart" },
-                        { icon: <Heart className="w-5 h-5" />, label: "Wishlisted", value: wishlistCount, href: "/wishlist" },
-                        { icon: <Package className="w-5 h-5" />, label: "Orders", value: 0, href: "#" },
+                        ...(user.role === "buyer" ? [{ icon: <ShoppingCart className="w-5 h-5" />, label: "Cart Items", value: cartCount, href: "/cart" }] : []),
+                        ...(user.role === "buyer" ? [{ icon: <Heart className="w-5 h-5" />, label: "Wishlisted", value: wishlistCount, href: "/wishlist" }] : []),
+                        ...(user.role === "buyer" ? [{ icon: <Package className="w-5 h-5" />, label: "Orders", value: 0, href: "#" }] : []),
                         ...(user.role === "seller" ? [{ icon: <FileText className="w-5 h-5" />, label: "Invoices", value: 0, href: "#" }] : []),
                         ...(user.role === "author" ? [{ icon: <Coins className="w-5 h-5" />, label: "Royalty", value: "₹0", href: "#" }] : []),
                     ].map((stat) => (

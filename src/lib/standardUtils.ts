@@ -24,6 +24,7 @@ export function standardToBook(s: Standard): Book {
         bookUrl: `/standards/${s.slug}`,
         description: s.description,
         slug: "std-" + s.slug,
+        discount: s.discount,
         rating: getBookRating("std-" + s.slug),
         reviewCount: getReviewCount("std-" + s.slug),
         visible: true,

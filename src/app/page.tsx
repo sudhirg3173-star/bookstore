@@ -15,7 +15,7 @@ export default function HomePage() {
         <>
             <HeroBanner />
             <PromoBanner />
-            <TrendingBooks books={trending} title="Trending on Kabdwalbook" />
+            <TrendingStandards standards={standards} />
             <TopCategories />
             {/* <BooksOfMonth books={booksOfMonth} /> */}
             {/* <AdventureBanner /> */}
@@ -30,7 +30,7 @@ export default function HomePage() {
                 subtitle="New Releases"
                 viewAllHref="/category/new-releases"
             /> */}
-            <TrendingStandards standards={standards} />
+            <TrendingBooks books={trending} title="Trending Books" />
             <Testimonials />
         </>
     );
