@@ -26,8 +26,8 @@ export default function TrendingBooks({ books, title = "Trending on Kabdwalbook"
                 </div>
 
                 {/* Product Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 gap-4 md:gap-5">
-                    {books.slice(0, 8).map((book) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-5">
+                    {books.slice(0, 10).map((book) => (
                         <ProductCard key={book.sku} book={book} />
                     ))}
                 </div>
