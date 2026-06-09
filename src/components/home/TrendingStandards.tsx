@@ -19,9 +19,9 @@ export default function TrendingStandards({ standards }: TrendingStandardsProps)
                         <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900">
                             Trending Quality &amp; Engineering Standards
                         </h2>
-                        <p className="text-sm text-gray-500 mt-1.5 max-w-xl">
+                        {/*<p className="text-sm text-gray-500 mt-1.5 max-w-xl">
                             Official AIAG, IATF and ISO standards for automotive quality management, FMEA, SPC, PPAP and more.
-                        </p>
+                        </p> */}
                     </div>
                     <Link
                         href="/standards"
