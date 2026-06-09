@@ -16,7 +16,7 @@ export default function HomePage() {
             <HeroBanner />
             <PromoBanner />
             <TrendingStandards standards={standards} />
-            <TopCategories />
+            {/* <TopCategories /> */}
             {/* <BooksOfMonth books={booksOfMonth} /> */}
             {/* <AdventureBanner /> */}
             {/* <TopBooksSection
