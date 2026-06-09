@@ -1,7 +1,7 @@
 import HeroBanner from "@/components/home/HeroBanner";
 import PromoBanner from "@/components/home/PromoBanner";
 import TrendingBooks from "@/components/home/TrendingBooks";
-import TopCategories from "@/components/home/TopCategories";
+// import TopCategories from "@/components/home/TopCategories";
 import TrendingStandards from "@/components/home/TrendingStandards";
 import Testimonials from "@/components/home/Testimonials";
 import { getTrendingBooks } from "@/lib/books";
