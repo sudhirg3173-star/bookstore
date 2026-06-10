@@ -33,6 +33,9 @@ export default function StandardDetailClient({ standard }: Props) {
     };
 
     const acronym = standard.number.split(/[\s:]/)[0].toUpperCase();
+    const discountedPrice = standard.discount
+        ? standard.price * (1 - standard.discount / 100)
+        : null;
 
     return (
         <div className="bg-gray-50 min-h-screen">
@@ -123,7 +126,19 @@ export default function StandardDetailClient({ standard }: Props) {
                             {/* Price + Actions */}
                             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-2 border-t border-gray-100">
                                 <div>
-                                    <p className="text-3xl font-extrabold text-gray-900">{formatPrice(standard.price, standard.currency)}</p>
+                                    {discountedPrice ? (
+                                        <>
+                                            <div className="flex items-baseline gap-3">
+                                                <p className="text-3xl font-extrabold text-gray-900">{formatPrice(discountedPrice, standard.currency)}</p>
+                                                <p className="text-lg text-gray-400 line-through">{formatPrice(standard.price, standard.currency)}</p>
+                                                <span className="text-sm bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">
+                                                    Save {standard.discount}%
+                                                </span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className="text-3xl font-extrabold text-gray-900">{formatPrice(standard.price, standard.currency)}</p>
+                                    )}
                                     <p className="text-xs text-gray-400 mt-0.5">Official print edition</p>
                                 </div>
                                 <div className="flex items-center gap-3 sm:ml-auto">
