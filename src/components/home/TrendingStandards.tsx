@@ -33,7 +33,7 @@ export default function TrendingStandards({ standards }: TrendingStandardsProps)
 
                 {/* Grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-5 gap-4 md:gap-5">
-                    {standards.slice(0, 8).map((s) => (
+                    {standards.slice(0, 10).map((s) => (
                         <StandardCard key={s.slug} standard={s} />
                     ))}
                 </div>

@@ -201,6 +201,7 @@ export function getAllBooks(): Book[] {
                 reviewCount,
                 discount,
                 visible,
+                publisher: row["publisher"] || row["Publisher"] || "",
             } as Book;
         });
 
@@ -251,6 +252,11 @@ export function slugToSubject(slug: string): string | undefined {
 export function getCategories(): string[] {
     const cats = new Set(getAllBooks().map((b) => b.category));
     return Array.from(cats).filter(Boolean).sort();
+}
+
+export function getPublishers(): string[] {
+    const pubs = new Set(getPublicBooks().map((b) => b.publisher));
+    return Array.from(pubs).filter(Boolean).sort();
 }
 
 export function getNewReleases(limit?: number): Book[] {

@@ -9,24 +9,28 @@ const subjectSlug = (s: string) =>
 
 interface ShopSidebarProps {
     subjects: string[];
+    publishers?: string[];
     currentSubject?: string;
     onFilterChange?: (filters: {
         availability: string[];
         minPrice: number;
         maxPrice: number;
+        publishers: string[];
     }) => void;
-    filters?: { availability: string[]; minPrice: number; maxPrice: number };
+    filters?: { availability: string[]; minPrice: number; maxPrice: number; publishers: string[] };
 }
 
 export default function ShopSidebar({
     subjects,
+    publishers = [],
     currentSubject,
     onFilterChange,
-    filters = { availability: [], minPrice: 0, maxPrice: 5000 },
+    filters = { availability: [], minPrice: 0, maxPrice: 5000, publishers: [] },
 }: ShopSidebarProps) {
     const [catOpen, setCatOpen] = useState(true);
     const [availOpen, setAvailOpen] = useState(true);
     const [priceOpen, setPriceOpen] = useState(true);
+    const [pubOpen, setPubOpen] = useState(true);
     const [mobileOpen, setMobileOpen] = useState(false);
 
     const handleAvailability = (val: string) => {
@@ -35,6 +39,14 @@ export default function ShopSidebar({
             ? current.filter((v) => v !== val)
             : [...current, val];
         onFilterChange?.({ ...filters, availability: updated });
+    };
+
+    const handlePublisher = (val: string) => {
+        const current = filters.publishers ?? [];
+        const updated = current.includes(val)
+            ? current.filter((v) => v !== val)
+            : [...current, val];
+        onFilterChange?.({ ...filters, publishers: updated });
     };
 
     const SidebarContent = () => (
@@ -78,6 +90,43 @@ export default function ShopSidebar({
                     </div>
                 )}
             </div>
+
+            {/* Publisher */}
+            {publishers.length > 0 && (
+                <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <button
+                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 font-semibold text-sm text-gray-800"
+                        onClick={() => setPubOpen(!pubOpen)}
+                    >
+                        Publisher
+                        {pubOpen ? (
+                            <ChevronUp className="w-4 h-4 text-gray-500" />
+                        ) : (
+                            <ChevronDown className="w-4 h-4 text-gray-500" />
+                        )}
+                    </button>
+                    {pubOpen && (
+                        <div className="px-4 py-3 space-y-2 max-h-48 overflow-y-auto">
+                            {publishers.map((pub) => (
+                                <label
+                                    key={pub}
+                                    className="flex items-center gap-2.5 cursor-pointer group"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={(filters.publishers ?? []).includes(pub)}
+                                        onChange={() => handlePublisher(pub)}
+                                        className="w-4 h-4 rounded border-gray-300 text-primary accent-primary"
+                                    />
+                                    <span className="text-sm text-gray-600 group-hover:text-gray-800">
+                                        {pub}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Availability */}
             <div className="border border-gray-200 rounded-xl overflow-hidden">
