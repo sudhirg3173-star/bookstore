@@ -8,10 +8,13 @@ import {
     ShoppingCart, Heart, Edit2, Save, X, Package, Store,
     FileText, Coins,
 } from "lucide-react";
+import { getDocs, query, collection, where } from "firebase/firestore";
 import { useAuthStore } from "@/store/authStore";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
+import { getFirebaseFirestore } from "@/lib/firebaseClient";
 import { UserRole } from "@/types/auth";
+import { Order } from "@/types/order";
 import { cn } from "@/lib/utils";
 
 const roleMeta: Record<UserRole, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
@@ -33,6 +36,8 @@ export default function AccountPage() {
     const [authorBio, setAuthorBio] = useState("");
     const [saved, setSaved] = useState(false);
     const loggingOutRef = useRef(false);
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [ordersLoading, setOrdersLoading] = useState(false);
 
     useEffect(() => {
         if (!isAuthenticated && !loggingOutRef.current) {
@@ -44,6 +49,20 @@ export default function AccountPage() {
             setAuthorBio(user.authorBio || "");
         }
     }, [isAuthenticated, user, router]);
+
+    useEffect(() => {
+        if (!user || user.role !== "buyer") return;
+        setOrdersLoading(true);
+        const db = getFirebaseFirestore();
+        getDocs(query(collection(db, "orders"), where("userId", "==", user.id)))
+            .then((snap) => {
+                const fetched = snap.docs.map((d) => ({ id: d.id, ...d.data() } as Order));
+                fetched.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                setOrders(fetched);
+            })
+            .catch((err) => console.error("Failed to fetch orders:", err))
+            .finally(() => setOrdersLoading(false));
+    }, [user]);
 
     if (!user) return null;
 
@@ -118,7 +137,7 @@ export default function AccountPage() {
                     {[
                         ...(user.role === "buyer" ? [{ icon: <ShoppingCart className="w-5 h-5" />, label: "Cart Items", value: cartCount, href: "/cart" }] : []),
                         ...(user.role === "buyer" ? [{ icon: <Heart className="w-5 h-5" />, label: "Wishlisted", value: wishlistCount, href: "/wishlist" }] : []),
-                        ...(user.role === "buyer" ? [{ icon: <Package className="w-5 h-5" />, label: "Orders", value: 0, href: "#" }] : []),
+                        ...(user.role === "buyer" ? [{ icon: <Package className="w-5 h-5" />, label: "Orders", value: orders.length, href: "#orders" }] : []),
                         ...(user.role === "seller" ? [{ icon: <FileText className="w-5 h-5" />, label: "Invoices", value: 0, href: "#" }] : []),
                         ...(user.role === "author" ? [{ icon: <Coins className="w-5 h-5" />, label: "Royalty", value: "₹0", href: "#" }] : []),
                     ].map((stat) => (
@@ -386,6 +405,110 @@ export default function AccountPage() {
                                 </Link>
                             ))}
                         </div>
+                    </div>
+                )}
+
+                {user.role === "buyer" && (
+                    <div id="orders" className="bg-white rounded-2xl border border-gray-100 p-6">
+                        <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                            <Package className="w-5 h-5 text-blue-500" /> Order History
+                        </h2>
+
+                        {ordersLoading ? (
+                            <div className="py-8 text-center text-sm text-gray-400">Loading orders…</div>
+                        ) : orders.length === 0 ? (
+                            <div className="py-8 text-center text-sm text-gray-400 italic">
+                                No orders yet. Start shopping!
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {orders.map((order) => (
+                                    <div
+                                        key={order.paymentRequestId}
+                                        className="border border-gray-100 rounded-xl overflow-hidden"
+                                    >
+                                        {/* Order header */}
+                                        <div className="flex flex-wrap items-center justify-between gap-3 bg-gray-50 px-4 py-3">
+                                            <div className="space-y-0.5">
+                                                <p className="text-xs text-gray-400 uppercase tracking-wide font-medium">
+                                                    Order Reference
+                                                </p>
+                                                <p className="text-xs font-mono text-gray-700 break-all">
+                                                    {order.paymentId || order.paymentRequestId}
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div className="text-right">
+                                                    <p className="text-xs text-gray-400">Date</p>
+                                                    <p className="text-xs font-medium text-gray-700">
+                                                        {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                                                            day: "numeric", month: "short", year: "numeric",
+                                                        })}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs text-gray-400">Total</p>
+                                                    <p className="text-sm font-bold text-gray-800">
+                                                        ₹{order.amount.toFixed(2)}
+                                                    </p>
+                                                </div>
+                                                <span className={cn(
+                                                    "px-2.5 py-1 rounded-full text-xs font-semibold",
+                                                    order.status === "Credit"
+                                                        ? "bg-green-100 text-green-700"
+                                                        : order.status === "Failed"
+                                                            ? "bg-red-100 text-red-600"
+                                                            : "bg-amber-100 text-amber-700"
+                                                )}>
+                                                    {order.status === "Credit" ? "Paid" : order.status === "Failed" ? "Failed" : "Pending"}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Order items */}
+                                        <div className="divide-y divide-gray-50">
+                                            {order.items.map((item) => (
+                                                <div key={item.sku} className="flex items-center gap-3 px-4 py-3">
+                                                    {item.imageUrl && (
+                                                        <div className="w-10 h-14 flex-shrink-0 rounded overflow-hidden bg-gray-100">
+                                                            <img
+                                                                src={item.imageUrl}
+                                                                alt={item.title}
+                                                                className="w-full h-full object-cover"
+                                                            />
+                                                        </div>
+                                                    )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-sm font-medium text-gray-800 truncate">{item.title}</p>
+                                                        <p className="text-xs text-gray-400 truncate">{item.authors}</p>
+                                                    </div>
+                                                    <div className="text-right flex-shrink-0">
+                                                        <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                                                        <p className="text-xs font-semibold text-gray-700">
+                                                            {item.currency} {(item.discount
+                                                                ? item.price * (1 - item.discount / 100)
+                                                                : item.price
+                                                            ).toFixed(2)}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Delivery address */}
+                                        <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
+                                            <p className="text-xs text-gray-400 mb-0.5 font-medium uppercase tracking-wide">Delivery To</p>
+                                            <p className="text-xs text-gray-600">
+                                                {order.billing.name} · {order.billing.phone}
+                                            </p>
+                                            <p className="text-xs text-gray-500">
+                                                {order.billing.address}, {order.billing.state} – {order.billing.pincode}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

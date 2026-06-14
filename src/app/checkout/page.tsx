@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Script from "next/script";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -20,9 +19,13 @@ import {
     RefreshCw,
     Info,
 } from "lucide-react";
+import { setDoc, doc } from "firebase/firestore";
 import { useCartStore } from "@/store/cartStore";
+import { useAuthStore } from "@/store/authStore";
+import { getFirebaseFirestore } from "@/lib/firebaseClient";
 import { getBookUrl } from "@/lib/utils";
 import { CreatePaymentRequestResponse } from "@/types/payment";
+import { Order } from "@/types/order";
 import { formatPrice } from "@/store/currencyStore";
 
 /** Convert a price in `fromCurrency` to INR using the rates map (base = INR). */
@@ -75,12 +78,37 @@ interface BillingForm {
 export default function CheckoutPage() {
     const router = useRouter();
     const { items, clearCart } = useCartStore();
+    const { user } = useAuthStore();
     const [scriptLoaded, setScriptLoaded] = useState(false);
+
+    // Load Instamojo script manually via useEffect so React never tries to
+    // hoist/unmount it as a <Script> component — avoids removeChild null crash.
+    useEffect(() => {
+        if (document.getElementById("instamojo-checkout-js")) {
+            // Already injected (e.g. HMR re-mount)
+            if (window.Instamojo) setScriptLoaded(true);
+            return;
+        }
+        const script = document.createElement("script");
+        script.id = "instamojo-checkout-js";
+        script.src = "https://js.instamojo.com/v1/checkout.js";
+        script.async = true;
+        script.onload = () => {
+            setScriptLoaded(true);
+            if (paymentUrlRef.current && window.Instamojo) {
+                configurInstamojo(paymentUrlRef.current);
+            }
+        };
+        document.body.appendChild(script);
+        // Do NOT remove the script on unmount — removing it while the modal
+        // is alive would crash the Instamojo SDK.
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [form, setForm] = useState<BillingForm>({ name: "", email: "", phone: "", address: "", state: "", pincode: "" });
     const [fieldErrors, setFieldErrors] = useState<Partial<BillingForm>>({});
     const paymentUrlRef = useRef<string | null>(null);
+    const pendingOrderDataRef = useRef<Omit<Order, "id"> | null>(null);
 
     // Live exchange rates (base = INR)
     const [rates, setRates] = useState<Record<string, number>>({ INR: 1 });
@@ -105,7 +133,7 @@ export default function CheckoutPage() {
             : item.book.price;
         return sum + toINR(unitPrice * item.quantity, item.book.currency, rates);
     }, 0);
-    const shippingINR = subtotalINR > 999 ? 0 : 99;
+    const shippingINR = subtotalINR > 999 ? 0 : 0;
     const grandTotalINR = Math.round((subtotalINR + shippingINR) * 100) / 100;
 
     // Currencies in the cart that need conversion
@@ -147,29 +175,57 @@ export default function CheckoutPage() {
     function configurInstamojo(paymentUrl: string) {
         window.Instamojo.configure({
             handlers: {
-                onOpen: () => setIsProcessing(false),
+                onOpen: () => { /* modal opened */ },
                 onClose: () => {
                     setIsProcessing(false);
                 },
-                onSuccess: (response) => {
+                onSuccess: async (response) => {
+                    // Close the modal first to let Instamojo clean up its DOM nodes
+                    // before React navigates away — prevents removeChild null errors.
+                    try { window.Instamojo.close(); } catch { /* ignore */ }
+
+                    // Save full order to Firestore only on successful payment
+                    const requestId = response.paymentRequestId || pendingOrderDataRef.current?.paymentRequestId;
+                    if (requestId && pendingOrderDataRef.current) {
+                        try {
+                            const db = getFirebaseFirestore();
+                            await setDoc(
+                                doc(db, "orders", requestId),
+                                {
+                                    ...pendingOrderDataRef.current,
+                                    paymentId: response.paymentId || "",
+                                    status: "Credit",
+                                }
+                            );
+                        } catch (err) {
+                            console.error("Failed to save order:", err);
+                        }
+                    }
                     clearCart();
                     const params = new URLSearchParams({
                         payment_id: response.paymentId || "",
                         payment_request_id: response.paymentRequestId || "",
                         status: response.paymentStatus || "Credit",
                     });
-                    router.push(`/payment/success?${params.toString()}`);
+                    // Defer navigation one tick so the modal overlay is fully
+                    // removed from the DOM before React mounts the next page.
+                    setTimeout(() => router.push(`/payment/success?${params.toString()}`), 100);
                 },
                 onFailure: (response) => {
+                    try { window.Instamojo.close(); } catch { /* ignore */ }
+                    setIsProcessing(false);
                     const params = new URLSearchParams({
                         payment_id: response.paymentId || "",
                         status: response.paymentStatus || "Failed",
                     });
-                    router.push(`/payment/failure?${params.toString()}`);
+                    setTimeout(() => router.push(`/payment/failure?${params.toString()}`), 100);
                 },
             },
         });
         window.Instamojo.open(paymentUrl);
+        // Reset the loading state immediately after calling open — do not wait
+        // for onOpen, which may never fire if the browser blocks the overlay.
+        setIsProcessing(false);
     }
 
     async function handlePayNow() {
@@ -207,6 +263,35 @@ export default function CheckoutPage() {
 
             paymentUrlRef.current = data.paymentUrl;
 
+            // Store full order data in a ref — it will be written to Firestore
+            // only after payment succeeds (inside the onSuccess handler).
+            pendingOrderDataRef.current = {
+                userId: user?.id ?? null,
+                paymentRequestId: data.requestId,
+                paymentId: "",
+                status: "Pending",
+                amount: grandTotalINR,
+                items: items.map((item) => ({
+                    title: item.book.title,
+                    authors: item.book.authors,
+                    sku: item.book.sku,
+                    quantity: item.quantity,
+                    price: item.book.price,
+                    currency: item.book.currency,
+                    ...(item.book.discount ? { discount: item.book.discount } : {}),
+                    imageUrl: item.book.imageUrl,
+                })),
+                billing: {
+                    name: form.name.trim(),
+                    email: form.email.trim(),
+                    phone: form.phone.trim(),
+                    address: form.address.trim(),
+                    state: form.state,
+                    pincode: form.pincode.trim(),
+                },
+                createdAt: new Date().toISOString(),
+            };
+
             if (scriptLoaded && window.Instamojo) {
                 configurInstamojo(data.paymentUrl);
             } else {
@@ -219,24 +304,10 @@ export default function CheckoutPage() {
         }
     }
 
-    function handleScriptLoad() {
-        setScriptLoaded(true);
-        // If payment URL was already obtained while script was loading, open now
-        if (paymentUrlRef.current && window.Instamojo) {
-            configurInstamojo(paymentUrlRef.current);
-        }
-    }
-
     if (items.length === 0) return null;
 
     return (
         <>
-            <Script
-                src="https://js.instamojo.com/v1/checkout.js"
-                strategy="afterInteractive"
-                onLoad={handleScriptLoad}
-            />
-
             <div className="bg-gray-50 min-h-screen">
                 {/* Header */}
                 <div className="bg-white border-b border-gray-100">

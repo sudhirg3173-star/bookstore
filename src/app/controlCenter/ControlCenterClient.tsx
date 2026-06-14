@@ -7,12 +7,13 @@ import {
     Plus, Pencil, Trash2, Search, X, BookOpen, Award,
     ChevronLeft, ChevronRight, Loader2, AlertCircle, CheckCircle2,
     Upload, ImageIcon, LogOut, ArrowUpDown, ArrowUp, ArrowDown,
-    FileUp, CheckCircle, Info, Users, Eye, EyeOff,
+    FileUp, CheckCircle, Info, Users, Eye, EyeOff, Package,
 } from "lucide-react";
+import { Order } from "@/types/order";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Tab = "books" | "standards";
+type Tab = "books" | "standards" | "orders";
 type Row = Record<string, string> & { _index: number };
 
 interface ApiResponse {
@@ -840,6 +841,16 @@ export default function ControlCenterClient() {
     // Visibility toggle loading state
     const [togglingIndex, setTogglingIndex] = useState<number | null>(null);
 
+    // Orders tab state
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [ordersLoading, setOrdersLoading] = useState(false);
+    const [ordersSearch, setOrdersSearch] = useState("");
+    const [ordersMonth, setOrdersMonth] = useState("");
+    const [ordersYear, setOrdersYear] = useState("");
+    const [ordersSortDir, setOrdersSortDir] = useState<"asc" | "desc">("desc");
+    const [ordersPage, setOrdersPage] = useState(1);
+    const [ordersPageSize, setOrdersPageSize] = useState(20);
+
     const apiBase = tab === "books" ? "/api/admin/books" : "/api/admin/standards";
     const labels = tab === "books" ? BOOK_LABELS : STANDARD_LABELS;
     const tableCols = tab === "books" ? BOOK_TABLE_COLS : STANDARD_TABLE_COLS;
@@ -881,14 +892,36 @@ export default function ControlCenterClient() {
         }
     }, [apiBase]);
 
+    const fetchOrders = useCallback(async () => {
+        setOrdersLoading(true);
+        try {
+            const res = await fetch("/api/admin/orders", { cache: "no-store" });
+            const json = await res.json();
+            setOrders(json.orders ?? []);
+        } catch {
+            setToast({ message: "Failed to load orders", type: "error" });
+        } finally {
+            setOrdersLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
         setSearch("");
         setPage(1);
         setPageSize(10);
         setSortCol(null);
         setSortDir("asc");
-        fetchData();
-    }, [fetchData]);
+        setOrdersSearch("");
+        setOrdersMonth("");
+        setOrdersYear("");
+        setOrdersSortDir("desc");
+        setOrdersPage(1);
+        if (tab === "orders") {
+            fetchOrders();
+        } else {
+            fetchData();
+        }
+    }, [fetchData, fetchOrders, tab]);
 
     // ── Sort handler ─────────────────────────────────────────────
 
@@ -925,6 +958,43 @@ export default function ControlCenterClient() {
     const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
     const currentPage = Math.min(page, totalPages);
     const pageRows = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    // ── Orders derived state ──────────────────────────────────────────────────
+
+    const ordersYears = useMemo(() =>
+        Array.from(new Set(orders.map((o) => String(new Date(o.createdAt).getFullYear()))))
+            .sort((a, b) => parseInt(b) - parseInt(a)),
+        [orders]);
+
+    const ordersSorted = useMemo(() => {
+        let filtered = orders;
+        if (ordersSearch.trim()) {
+            const q = ordersSearch.toLowerCase();
+            filtered = filtered.filter((o) =>
+                o.billing.name.toLowerCase().includes(q) ||
+                o.billing.email.toLowerCase().includes(q) ||
+                (o.paymentId || o.paymentRequestId).toLowerCase().includes(q)
+            );
+        }
+        if (ordersMonth) {
+            filtered = filtered.filter((o) =>
+                String(new Date(o.createdAt).getMonth() + 1).padStart(2, "0") === ordersMonth
+            );
+        }
+        if (ordersYear) {
+            filtered = filtered.filter((o) =>
+                String(new Date(o.createdAt).getFullYear()) === ordersYear
+            );
+        }
+        return [...filtered].sort((a, b) => {
+            const diff = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+            return ordersSortDir === "asc" ? diff : -diff;
+        });
+    }, [orders, ordersSearch, ordersMonth, ordersYear, ordersSortDir]);
+
+    const ordersTotalPages = Math.max(1, Math.ceil(ordersSorted.length / ordersPageSize));
+    const ordersCurrentPage = Math.min(ordersPage, ordersTotalPages);
+    const ordersPageRows = ordersSorted.slice((ordersCurrentPage - 1) * ordersPageSize, ordersCurrentPage * ordersPageSize);
 
     // ── Save (create / update) ───────────────────────────────────────────────
 
@@ -1046,6 +1116,15 @@ export default function ControlCenterClient() {
                         </button>
                     ))}
                     <button
+                        onClick={() => setTab("orders")}
+                        className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all
+                            ${tab === "orders"
+                                ? "bg-blue-600 text-white shadow"
+                                : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"}`}
+                    >
+                        <Package className="w-4 h-4" /> Orders
+                    </button>
+                    <button
                         onClick={() => router.push("/controlCenter/users")}
                         className="flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-all"
                     >
@@ -1055,37 +1134,178 @@ export default function ControlCenterClient() {
 
                 {/* Toolbar */}
                 <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-                    <div className="relative w-full sm:w-80">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder={`Search ${tab}…`}
-                            value={search}
-                            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-                            className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <button
-                            onClick={() => setCsvModalOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
-                        >
-                            <FileUp className="w-4 h-4" />
-                            Upload CSV
-                        </button>
-                        <button
-                            onClick={() => { setEditRow(null); setModalOpen(true); }}
-                            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Add {tab === "books" ? "Book" : "Standard"}
-                        </button>
-                    </div>
+                    {tab === "orders" ? (
+                        <>
+                            <div className="relative w-full sm:w-80">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder="Search by buyer name or email…"
+                                    value={ordersSearch}
+                                    onChange={(e) => { setOrdersSearch(e.target.value); setOrdersPage(1); }}
+                                    className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                                <select
+                                    value={ordersMonth}
+                                    onChange={(e) => { setOrdersMonth(e.target.value); setOrdersPage(1); }}
+                                    className="px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">All Months</option>
+                                    {["January", "February", "March", "April", "May", "June",
+                                        "July", "August", "September", "October", "November", "December"
+                                    ].map((m, i) => (
+                                        <option key={m} value={String(i + 1).padStart(2, "0")}>{m}</option>
+                                    ))}
+                                </select>
+                                <select
+                                    value={ordersYear}
+                                    onChange={(e) => { setOrdersYear(e.target.value); setOrdersPage(1); }}
+                                    className="px-3 py-2.5 text-sm border border-gray-200 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">All Years</option>
+                                    {ordersYears.map((y) => (
+                                        <option key={y} value={y}>{y}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="relative w-full sm:w-80">
+                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input
+                                    type="text"
+                                    placeholder={`Search ${tab}…`}
+                                    value={search}
+                                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                                    className="w-full pl-9 pr-4 py-2.5 text-sm border border-gray-200 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                                <button
+                                    onClick={() => setCsvModalOpen(true)}
+                                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
+                                >
+                                    <FileUp className="w-4 h-4" />
+                                    Upload CSV
+                                </button>
+                                <button
+                                    onClick={() => { setEditRow(null); setModalOpen(true); }}
+                                    className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Add {tab === "books" ? "Book" : "Standard"}
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 {/* Table card */}
                 <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-                    {loading ? (
+                    {tab === "orders" ? (
+                        <>
+                            {ordersLoading ? (
+                                <div className="flex items-center justify-center py-24">
+                                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                                </div>
+                            ) : ordersSorted.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-24 text-gray-400 gap-3">
+                                    <Package className="w-10 h-10" />
+                                    <p className="text-sm">No orders found{ordersSearch || ordersMonth || ordersYear ? " for the applied filters" : ""}.</p>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                            <thead>
+                                                <tr className="border-b bg-gray-50">
+                                                    <th
+                                                        className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap cursor-pointer select-none hover:text-gray-700"
+                                                        onClick={() => { setOrdersSortDir((d) => d === "asc" ? "desc" : "asc"); setOrdersPage(1); }}
+                                                    >
+                                                        <span className="inline-flex items-center gap-1">
+                                                            Date
+                                                            {ordersSortDir === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
+                                                        </span>
+                                                    </th>
+                                                    {["Order Ref", "Buyer", "Email", "Items", "Amount", "Status"].map((col) => (
+                                                        <th key={col} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                                                            {col}
+                                                        </th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                                {ordersPageRows.map((order) => (
+                                                    <tr key={order.paymentRequestId} className="hover:bg-gray-50 transition-colors">
+                                                        <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">
+                                                            {new Date(order.createdAt).toLocaleDateString("en-IN", {
+                                                                day: "2-digit", month: "short", year: "numeric",
+                                                            })}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <span className="text-xs font-mono text-gray-600 max-w-[140px] block truncate" title={order.paymentId || order.paymentRequestId}>
+                                                                {order.paymentId || order.paymentRequestId}
+                                                            </span>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="text-sm font-medium text-gray-800">{order.billing.name}</div>
+                                                            <div className="text-xs text-gray-400">{order.billing.phone}</div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm text-gray-600 max-w-[180px] truncate" title={order.billing.email}>
+                                                            {order.billing.email}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <div className="text-sm text-gray-700">{order.items.length} book{order.items.length !== 1 ? "s" : ""}</div>
+                                                            <div className="text-xs text-gray-400 max-w-[160px] truncate" title={order.items.map((i) => i.title).join(", ")}>
+                                                                {order.items.map((i) => i.title).join(", ")}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-4 py-3 text-sm font-bold text-gray-800 whitespace-nowrap">
+                                                            ₹{order.amount.toFixed(2)}
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${order.status === "Credit" ? "bg-green-100 text-green-700" : order.status === "Failed" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"}`}>
+                                                                {order.status === "Credit" ? "Paid" : order.status === "Failed" ? "Failed" : "Pending"}
+                                                            </span>
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {/* Orders Pagination */}
+                                    <div className="flex items-center justify-between px-4 py-3 border-t bg-gray-50 text-sm text-gray-500">
+                                        <div className="flex items-center gap-2">
+                                            <span>Showing {Math.min((ordersCurrentPage - 1) * ordersPageSize + 1, ordersSorted.length)}–{Math.min(ordersCurrentPage * ordersPageSize, ordersSorted.length)} of {ordersSorted.length}</span>
+                                            <span className="text-gray-300">|</span>
+                                            <span className="text-xs text-gray-400">Rows:</span>
+                                            {PAGE_SIZE_OPTIONS.map((n) => (
+                                                <button key={n} onClick={() => { setOrdersPageSize(n); setOrdersPage(1); }}
+                                                    className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${ordersPageSize === n ? "bg-blue-600 text-white" : "hover:bg-gray-200 text-gray-600"}`}>
+                                                    {n}
+                                                </button>
+                                            ))}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <button onClick={() => setOrdersPage((p) => Math.max(1, p - 1))} disabled={ordersCurrentPage === 1}
+                                                className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-40 transition-colors">
+                                                <ChevronLeft className="w-4 h-4" />
+                                            </button>
+                                            <span className="px-2 font-medium text-gray-700">{ordersCurrentPage} / {ordersTotalPages}</span>
+                                            <button onClick={() => setOrdersPage((p) => Math.min(ordersTotalPages, p + 1))} disabled={ordersCurrentPage === ordersTotalPages}
+                                                className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-40 transition-colors">
+                                                <ChevronRight className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </>
+                    ) : loading ? (
                         <div className="flex items-center justify-center py-24">
                             <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                         </div>
