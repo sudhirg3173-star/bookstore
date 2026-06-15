@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ShoppingCart, Heart, Share2, Package, BookOpen, Calendar } from "lucide-react";
+import { ShoppingCart, Heart, Share2, Package, BookOpen, Calendar, Building2 } from "lucide-react";
 import { Book } from "@/types/book";
 import { formatPrice } from "@/store/currencyStore";
 import { useCartStore } from "@/store/cartStore";
@@ -126,7 +126,7 @@ export default function ProductDetailClient({
                         </div>
 
                         {/* Quick info */}
-                        <div className="grid grid-cols-3 gap-3 mb-6">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                             <div className="text-center p-3 bg-gray-50 rounded-xl">
                                 <Package className="w-4 h-4 text-primary mx-auto mb-1" />
                                 <p className="text-xs text-gray-500">Status</p>
@@ -153,6 +153,15 @@ export default function ProductDetailClient({
                                     {book.publicationYear}
                                 </p>
                             </div>
+                            {book.publisher && (
+                                <div className="text-center p-3 bg-gray-50 rounded-xl">
+                                    <Building2 className="w-4 h-4 text-primary mx-auto mb-1" />
+                                    <p className="text-xs text-gray-500">Publisher</p>
+                                    <p className="text-xs font-semibold mt-0.5 text-gray-700 leading-tight">
+                                        {book.publisher}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Quantity + Cart */}

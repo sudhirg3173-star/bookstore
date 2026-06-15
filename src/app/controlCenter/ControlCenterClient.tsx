@@ -38,6 +38,7 @@ const BOOK_LABELS: Record<string, string> = {
     Description: "Description",
     Visible: "Visible",
     Updated_At: "Updated",
+    Publisher: "Publisher",
 };
 
 const STANDARD_LABELS: Record<string, string> = {
@@ -851,7 +852,7 @@ export default function ControlCenterClient() {
         if (!data) return {};
         const opts: Record<string, string[]> = {};
         const dropdownFields = tab === "books"
-            ? ["Subject", "Category"]
+            ? ["Subject", "Category", "Publisher"]
             : ["PUBLISHER"];
         for (const field of dropdownFields) {
             const unique = Array.from(

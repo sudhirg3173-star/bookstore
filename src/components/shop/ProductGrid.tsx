@@ -14,6 +14,7 @@ import { formatPrice } from "@/store/currencyStore";
 interface ProductGridProps {
     books: Book[];
     subjects?: string[];
+    publishers?: string[];
     currentSubject?: string;
     showSidebar?: boolean;
 }
@@ -29,6 +30,7 @@ type SortKey =
 export default function ProductGrid({
     books,
     subjects = [],
+    publishers = [],
     currentSubject,
     showSidebar = true,
 }: ProductGridProps) {
@@ -40,6 +42,7 @@ export default function ProductGrid({
         availability: [] as string[],
         minPrice: 0,
         maxPrice: 5000,
+        publishers: [] as string[],
     });
 
     const filtered = useMemo(() => {
@@ -52,6 +55,9 @@ export default function ProductGrid({
         result = result.filter(
             (b) => b.price >= filters.minPrice && b.price <= filters.maxPrice
         );
+        if (filters.publishers.length > 0) {
+            result = result.filter((b) => filters.publishers.includes(b.publisher));
+        }
         return result;
     }, [books, filters]);
 
@@ -90,6 +96,7 @@ export default function ProductGrid({
             {showSidebar && (
                 <ShopSidebar
                     subjects={subjects}
+                    publishers={publishers}
                     currentSubject={currentSubject}
                     filters={filters}
                     onFilterChange={handleFilterChange}

@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { getPublicBooks, getSubjects } from "@/lib/books";
+import { getPublicBooks, getSubjects, getPublishers } from "@/lib/books";
 import ProductGrid from "@/components/shop/ProductGrid";
 import ProductGridSkeleton from "@/components/shop/ProductGridSkeleton";
 
@@ -11,6 +11,7 @@ export const metadata = {
 export default function ShopPage() {
     const books = getPublicBooks();
     const subjects = getSubjects();
+    const publishers = getPublishers();
 
     return (
         <div className="bg-gray-50 min-h-screen">
@@ -32,7 +33,7 @@ export default function ShopPage() {
             {/* Products */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <Suspense fallback={<ProductGridSkeleton />}>
-                    <ProductGrid books={books} subjects={subjects} showSidebar={true} />
+                    <ProductGrid books={books} subjects={subjects} publishers={publishers} showSidebar={true} />
                 </Suspense>
             </div>
         </div>

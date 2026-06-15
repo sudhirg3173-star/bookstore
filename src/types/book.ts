@@ -17,6 +17,7 @@ export interface Book {
     reviewCount: number;
     discount?: number;
     visible: boolean;
+    publisher: string;
 }
 
 export interface CartItem {

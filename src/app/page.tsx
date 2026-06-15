@@ -8,7 +8,7 @@ import { getTrendingBooks } from "@/lib/books";
 import { getTrendingStandards } from "@/lib/standards";
 
 export default function HomePage() {
-    const trending = getTrendingBooks(8);
+    const trending = getTrendingBooks(10);
     const standards = getTrendingStandards();
 
     return (
