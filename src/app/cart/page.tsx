@@ -44,7 +44,7 @@ export default function CartPage() {
     // const discountINR = promoApplied ? subtotalINR * 0.2 : 0;
     const discountINR = 0;
     const afterDiscountINR = subtotalINR - discountINR;
-    const shippingINR = afterDiscountINR > 999 ? 0 : 99;
+    const shippingINR = afterDiscountINR > 999 ? 0 : 0; // Free shipping for orders above ₹1000
     const totalINR = afterDiscountINR + shippingINR;
 
     // Currencies that need conversion (non-INR items in the cart)

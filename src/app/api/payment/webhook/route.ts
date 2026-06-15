@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import { InstamojoWebhookPayload } from "@/types/payment";
+import { getFirebaseAdmin } from "@/lib/firebaseAdmin";
 
 /**
  * Verifies the webhook MAC signature from Instamojo.
@@ -55,12 +56,20 @@ export async function POST(req: NextRequest) {
         }
 
         if (payload.status === "Credit") {
-            // Payment succeeded — update your database / fulfill order here
+            const { db } = getFirebaseAdmin();
+            await db.collection("orders").doc(payload.payment_request_id).set(
+                { paymentId: payload.payment_id, status: "Credit" },
+                { merge: true }
+            );
             console.log(
                 `Payment successful: id=${payload.payment_id} request=${payload.payment_request_id} amount=${payload.amount}`
             );
-            // TODO: persist order to DB
         } else {
+            const { db } = getFirebaseAdmin();
+            await db.collection("orders").doc(payload.payment_request_id).set(
+                { paymentId: payload.payment_id, status: "Failed" },
+                { merge: true }
+            );
             console.log(
                 `Payment failed: id=${payload.payment_id} status=${payload.status}`
             );
