@@ -246,7 +246,7 @@ export default function CartPage() {
                                 <div className="flex justify-between text-gray-600">
                                     <span>Shipping</span>
                                     <span className={shippingINR === 0 ? "text-green-600 font-medium" : ""}>
-                                        {shippingINR === 0 ? "Free" : formatPrice(shippingINR, "INR")}
+                                        {shippingINR === 0 ? "Free delivery across India" : formatPrice(shippingINR, "INR")}
                                     </span>
                                 </div>
                                 <div className="flex justify-between font-bold text-gray-900 text-base pt-3 border-t border-gray-100">
