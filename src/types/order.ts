@@ -18,12 +18,15 @@ export interface OrderBilling {
     pincode: string;
 }
 
+export type DeliveryStatus = "Processing" | "On hold" | "Completed" | "Cancelled" | "Refunded" | "Failed";
+
 export interface Order {
     id?: string;
     userId: string | null;
     paymentRequestId: string;
     paymentId: string;
     status: "Pending" | "Credit" | "Failed";
+    deliveryStatus?: DeliveryStatus;
     amount: number;
     items: OrderItem[];
     billing: OrderBilling;

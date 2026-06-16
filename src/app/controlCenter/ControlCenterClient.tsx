@@ -9,7 +9,7 @@ import {
     Upload, ImageIcon, LogOut, ArrowUpDown, ArrowUp, ArrowDown,
     FileUp, CheckCircle, Info, Users, Eye, EyeOff, Package,
 } from "lucide-react";
-import { Order } from "@/types/order";
+import { Order, DeliveryStatus } from "@/types/order";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -850,6 +850,8 @@ export default function ControlCenterClient() {
     const [ordersSortDir, setOrdersSortDir] = useState<"asc" | "desc">("desc");
     const [ordersPage, setOrdersPage] = useState(1);
     const [ordersPageSize, setOrdersPageSize] = useState(20);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [updatingDeliveryStatus, setUpdatingDeliveryStatus] = useState(false);
 
     const apiBase = tab === "books" ? "/api/admin/books" : "/api/admin/standards";
     const labels = tab === "books" ? BOOK_LABELS : STANDARD_LABELS;
@@ -1231,7 +1233,7 @@ export default function ControlCenterClient() {
                                                             {ordersSortDir === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />}
                                                         </span>
                                                     </th>
-                                                    {["Order Ref", "Buyer", "Email", "Items", "Amount", "Status"].map((col) => (
+                                                    {["Order Ref", "Buyer", "Email", "Items", "Amount", "Status", "Delivery", ""].map((col) => (
                                                         <th key={col} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">
                                                             {col}
                                                         </th>
@@ -1271,6 +1273,28 @@ export default function ControlCenterClient() {
                                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${order.status === "Credit" ? "bg-green-100 text-green-700" : order.status === "Failed" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"}`}>
                                                                 {order.status === "Credit" ? "Paid" : order.status === "Failed" ? "Failed" : "Pending"}
                                                             </span>
+                                                        </td>
+                                                        <td className="px-4 py-3">
+                                                            {order.deliveryStatus ? (
+                                                                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${order.deliveryStatus === "Completed" ? "bg-green-100 text-green-700" :
+                                                                        order.deliveryStatus === "Cancelled" || order.deliveryStatus === "Failed" ? "bg-red-100 text-red-600" :
+                                                                            order.deliveryStatus === "Refunded" ? "bg-purple-100 text-purple-700" :
+                                                                                order.deliveryStatus === "On hold" ? "bg-orange-100 text-orange-700" :
+                                                                                    "bg-blue-100 text-blue-700"
+                                                                    }`}>
+                                                                    {order.deliveryStatus}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-xs text-gray-300">—</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-4 py-3 text-right">
+                                                            <button
+                                                                onClick={() => setSelectedOrder(order)}
+                                                                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                                                            >
+                                                                <Info className="w-3.5 h-3.5" /> Details
+                                                            </button>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -1490,6 +1514,165 @@ export default function ControlCenterClient() {
                     onClose={() => setDeleteRow(null)}
                     deleting={deleting}
                 />
+            )}
+
+            {/* Order Details Modal */}
+            {selectedOrder && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b">
+                            <h2 className="text-lg font-semibold text-gray-900">Order Details</h2>
+                            <button onClick={() => setSelectedOrder(null)} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+                                <X className="w-4 h-4 text-gray-500" />
+                            </button>
+                        </div>
+                        {/* Body */}
+                        <div className="overflow-y-auto px-6 py-5 space-y-6 flex-1">
+                            {/* Order & Payment */}
+                            <section>
+                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Order Info</h3>
+                                <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                    <div>
+                                        <dt className="text-gray-500">Date</dt>
+                                        <dd className="font-medium text-gray-800">
+                                            {new Date(selectedOrder.createdAt).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                        </dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-gray-500">Amount</dt>
+                                        <dd className="font-bold text-gray-900">₹{selectedOrder.amount.toFixed(2)}</dd>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <dt className="text-gray-500">Payment Reference</dt>
+                                        <dd className="font-mono text-xs text-gray-700 break-all">{selectedOrder.paymentId || selectedOrder.paymentRequestId}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-gray-500">Payment Status</dt>
+                                        <dd>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${selectedOrder.status === "Credit" ? "bg-green-100 text-green-700" : selectedOrder.status === "Failed" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"}`}>
+                                                {selectedOrder.status === "Credit" ? "Paid" : selectedOrder.status === "Failed" ? "Failed" : "Pending"}
+                                            </span>
+                                        </dd>
+                                    </div>
+                                    {selectedOrder.userId && (
+                                        <div>
+                                            <dt className="text-gray-500">User ID</dt>
+                                            <dd className="font-mono text-xs text-gray-700 break-all">{selectedOrder.userId}</dd>
+                                        </div>
+                                    )}
+                                </dl>
+                            </section>
+
+                            {/* Billing */}
+                            <section>
+                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Billing Details</h3>
+                                <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                    <div>
+                                        <dt className="text-gray-500">Name</dt>
+                                        <dd className="font-medium text-gray-800">{selectedOrder.billing.name}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-gray-500">Email</dt>
+                                        <dd className="text-gray-700">{selectedOrder.billing.email}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-gray-500">Phone</dt>
+                                        <dd className="text-gray-700">{selectedOrder.billing.phone}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-gray-500">Pincode</dt>
+                                        <dd className="text-gray-700">{selectedOrder.billing.pincode}</dd>
+                                    </div>
+                                    <div>
+                                        <dt className="text-gray-500">State</dt>
+                                        <dd className="text-gray-700">{selectedOrder.billing.state}</dd>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <dt className="text-gray-500">Address</dt>
+                                        <dd className="text-gray-700">{selectedOrder.billing.address}</dd>
+                                    </div>
+                                </dl>
+                            </section>
+
+                            {/* Items */}
+                            <section>
+                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Items ({selectedOrder.items.length})</h3>
+                                <div className="space-y-2">
+                                    {selectedOrder.items.map((item, idx) => (
+                                        <div key={idx} className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border text-sm">
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-gray-800 truncate">{item.title}</p>
+                                                <p className="text-xs text-gray-500">{item.authors} · SKU: {item.sku}</p>
+                                            </div>
+                                            <div className="text-right shrink-0">
+                                                <p className="font-semibold text-gray-800">{item.currency} {item.price.toFixed(2)}</p>
+                                                <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* Delivery Status */}
+                            <section>
+                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Delivery Status</h3>
+                                <div className="flex items-center gap-3">
+                                    <select
+                                        defaultValue={selectedOrder.deliveryStatus ?? ""}
+                                        id="delivery-status-select"
+                                        className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value="">— Select status —</option>
+                                        {(["Processing", "On hold", "Completed", "Cancelled", "Refunded", "Failed"] as DeliveryStatus[]).map((s) => (
+                                            <option key={s} value={s}>{s}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        disabled={updatingDeliveryStatus}
+                                        onClick={async () => {
+                                            const sel = (document.getElementById("delivery-status-select") as HTMLSelectElement).value as DeliveryStatus;
+                                            if (!sel) return;
+                                            if (!selectedOrder.id) {
+                                                setToast({ message: "Order ID missing, cannot update status", type: "error" });
+                                                return;
+                                            }
+                                            setUpdatingDeliveryStatus(true);
+                                            try {
+                                                const res = await fetch(`/api/admin/orders/${selectedOrder.id}`, {
+                                                    method: "PATCH",
+                                                    headers: { "Content-Type": "application/json" },
+                                                    body: JSON.stringify({ deliveryStatus: sel }),
+                                                });
+                                                if (!res.ok) throw new Error();
+                                                setOrders((prev) => prev.map((o) => o.id === selectedOrder.id ? { ...o, deliveryStatus: sel } : o));
+                                                setSelectedOrder((prev) => prev ? { ...prev, deliveryStatus: sel } : prev);
+                                                setToast({ message: "Delivery status updated", type: "success" });
+                                            } catch {
+                                                setToast({ message: "Failed to update delivery status", type: "error" });
+                                            } finally {
+                                                setUpdatingDeliveryStatus(false);
+                                            }
+                                        }}
+                                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
+                                    >
+                                        {updatingDeliveryStatus ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                                        Save
+                                    </button>
+                                </div>
+                            </section>
+                        </div>
+                        {/* Footer */}
+                        <div className="flex justify-end px-6 py-4 border-t">
+                            <button
+                                onClick={() => setSelectedOrder(null)}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Toast */}
