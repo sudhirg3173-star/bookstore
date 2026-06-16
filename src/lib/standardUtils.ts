@@ -13,6 +13,7 @@ export function standardToBook(s: Standard): Book {
         subject: "Standards",
         title: s.name,
         authors: s.publisher,
+        publisher: s.publisher,
         sku: "std-" + s.slug,
         price: s.price,
         currency: s.currency,
