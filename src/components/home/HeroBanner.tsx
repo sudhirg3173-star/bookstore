@@ -8,38 +8,41 @@ import { ChevronRight } from "lucide-react";
 const slides = [
     {
         id: 1,
-        badge: "NEW RELEASE",
+        badge: "BESTSELLER",
         headline: "Bestselling\n Books",
-        subtext: "Over 100,000 trusted reviews",
+        subtext: "Discover popular\n titles of the month",
         cta: "Shop Now",
         href: "/shop",
         gradient: "from-[#0f0c29] via-[#302b63] to-[#24243e]",
         accent: "text-amber-400",
-        bookEmoji: "📚",
+        bookEmoji: "",
+        image: "/images/banner/banner3.jpeg",
     },
     {
         id: 2,
+        badge: "STANDARDS & REFERENCES",
+        headline: "Explore\n Standards",
+        subtext: "Handpicked by our editorial team",
+        cta: "Explore Now",
+        href: "/standards",
+        gradient: "from-[#57023D] via-[#82045C] to-[#C40465]",
+        accent: "text-emerald-300",
+        bookEmoji: "",
+        image: "/images/banner/banner1.jpeg",
+    },
+    {
+        id: 3,
         badge: "PRE-ORDER",
         headline: "New Releases\nArrive Daily",
         subtext: "Be the first to own new titles",
         cta: "Pre-Order Now",
-        href: "/shop?sort=new",
+        href: "/category/new-releases",
         gradient: "from-[#02114F] via-[#041B80] to-[#0524A3]",
         accent: "text-orange-300",
         bookEmoji: "",
         image: "/images/banner/banner2.png",
     },
-    {
-        id: 3,
-        badge: "TOP RATED",
-        headline: "Explore Our\nTop Picks",
-        subtext: "Handpicked by our editorial team",
-        cta: "Explore Now",
-        href: "/shop?sort=rating",
-        gradient: "from-[#57023D] via-[#82045C] to-[#C40465]",
-        accent: "text-emerald-300",
-        bookEmoji: "⭐",
-    },
+
 ];
 
 export default function HeroBanner() {
@@ -58,11 +61,11 @@ export default function HeroBanner() {
         <section className="relative overflow-hidden">
             <div
                 className={`bg-gradient-to-br ${slide.gradient} transition-all duration-700 ease-in-out relative`}
-                style={{ minHeight: "480px" }}
+                style={{ minHeight: "550px" }}
             >
                 {/* Full-size banner image positioned in outer container */}
                 {slide.image && (
-                    <div className="absolute inset-y-0 right-8 hidden md:flex items-center pointer-events-none">
+                    <div className={`absolute inset-y-0 ${slide.id == 3 ? "right-8" : "right-0"} hidden md:flex items-center pointer-events-none`}>
                         <Image
                             src={slide.image}
                             alt={slide.headline.replace("\n", " ")}
