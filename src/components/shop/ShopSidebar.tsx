@@ -29,7 +29,7 @@ export default function ShopSidebar({
 }: ShopSidebarProps) {
     const [catOpen, setCatOpen] = useState(true);
     const [availOpen, setAvailOpen] = useState(true);
-    const [priceOpen, setPriceOpen] = useState(true);
+    // const [priceOpen, setPriceOpen] = useState(true);
     const [pubOpen, setPubOpen] = useState(true);
     const [mobileOpen, setMobileOpen] = useState(false);
 
