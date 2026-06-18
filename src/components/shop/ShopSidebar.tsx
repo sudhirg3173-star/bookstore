@@ -164,7 +164,7 @@ export default function ShopSidebar({
             </div>
 
             {/* Price range */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
+            {/*<div className="border border-gray-200 rounded-xl overflow-hidden">
                 <button
                     className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 font-semibold text-sm text-gray-800"
                     onClick={() => setPriceOpen(!priceOpen)}
@@ -225,7 +225,7 @@ export default function ShopSidebar({
                         </div>
                     </div>
                 )}
-            </div>
+            </div>*/}
         </div>
     );
 
