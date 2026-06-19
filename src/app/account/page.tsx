@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -470,11 +471,12 @@ export default function AccountPage() {
                                             {order.items.map((item) => (
                                                 <div key={item.sku} className="flex items-center gap-3 px-4 py-3">
                                                     {item.imageUrl && (
-                                                        <div className="w-10 h-14 flex-shrink-0 rounded overflow-hidden bg-gray-100">
-                                                            <img
+                                                        <div className="w-10 h-14 flex-shrink-0 rounded overflow-hidden bg-gray-100 relative">
+                                                            <Image
                                                                 src={item.imageUrl}
                                                                 alt={item.title}
-                                                                className="w-full h-full object-cover"
+                                                                fill
+                                                                className="object-cover"
                                                             />
                                                         </div>
                                                     )}
