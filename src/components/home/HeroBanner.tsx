@@ -51,7 +51,7 @@ export default function HeroBanner() {
     useEffect(() => {
         const interval = setInterval(() => {
             setCurrent((prev) => (prev + 1) % slides.length);
-        }, 4000);
+        }, 4500);
         return () => clearInterval(interval);
     }, []);
 
