@@ -61,7 +61,7 @@ export default function HeroBanner() {
         <section className="relative overflow-hidden">
             <div
                 className={`bg-gradient-to-br ${slide.gradient} transition-all duration-700 ease-in-out relative`}
-                style={{ minHeight: "250px" }}
+                style={{ minHeight: "200px" }}
             >
                 {/* Full-size banner image positioned in outer container */}
                 {slide.image && (
