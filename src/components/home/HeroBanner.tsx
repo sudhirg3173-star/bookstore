@@ -13,7 +13,7 @@ const slides = [
         subtext: "Discover popular\n titles of the month",
         cta: "Shop Now",
         href: "/shop",
-        gradient: "from-[#0f0c29] via-[#302b63] to-[#24243e]",
+        gradient: "from-[#001329] via-[#001329] to-[#001329]",
         accent: "text-amber-400",
         bookEmoji: "",
         image: "/images/banner/banner3.webp",
@@ -25,7 +25,7 @@ const slides = [
         subtext: "Handpicked by our editorial team",
         cta: "Explore Now",
         href: "/standards",
-        gradient: "from-[#57023D] via-[#82045C] to-[#C40465]",
+        gradient: "from-[#001329] via-[#001329] to-[#001329]",
         accent: "text-emerald-300",
         bookEmoji: "",
         image: "/images/banner/banner1.webp",
@@ -61,7 +61,7 @@ export default function HeroBanner() {
         <section className="relative overflow-hidden">
             <div
                 className={`bg-gradient-to-br ${slide.gradient} transition-all duration-700 ease-in-out relative`}
-                style={{ minHeight: "550px" }}
+                style={{ minHeight: "350px" }}
             >
                 {/* Full-size banner image positioned in outer container */}
                 {slide.image && (
