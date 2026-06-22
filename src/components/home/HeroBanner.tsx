@@ -16,7 +16,7 @@ const slides = [
         gradient: "from-[#0f0c29] via-[#302b63] to-[#24243e]",
         accent: "text-amber-400",
         bookEmoji: "",
-        image: "/images/banner/banner3.jpeg",
+        image: "/images/banner/banner3.webp",
     },
     {
         id: 2,
@@ -28,7 +28,7 @@ const slides = [
         gradient: "from-[#57023D] via-[#82045C] to-[#C40465]",
         accent: "text-emerald-300",
         bookEmoji: "",
-        image: "/images/banner/banner1.jpeg",
+        image: "/images/banner/banner1.webp",
     },
     {
         id: 3,
