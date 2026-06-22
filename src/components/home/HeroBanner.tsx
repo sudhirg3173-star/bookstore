@@ -26,7 +26,7 @@ const slides = [
         cta: "Explore Now",
         href: "/standards",
         gradient: "from-[#001329] via-[#001329] to-[#001329]",
-        accent: "text-emerald-300",
+        accent: "text-emerald-400",
         bookEmoji: "",
         image: "/images/banner/banner1.webp",
     },
