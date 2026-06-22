@@ -26,7 +26,7 @@ const slides = [
         cta: "Explore Now",
         href: "/standards",
         gradient: "from-[#001329] via-[#001329] to-[#001329]",
-        accent: "text-emerald-400",
+        accent: "text-emerald-300",
         bookEmoji: "",
         image: "/images/banner/banner1.webp",
     },
@@ -65,7 +65,7 @@ export default function HeroBanner() {
             >
                 {/* Full-size banner image positioned in outer container */}
                 {slide.image && (
-                    <div className={`absolute inset-y-0 ${slide.id == 2 ? "right-8" : "right-0"} hidden md:flex items-center pointer-events-none`}>
+                    <div className={`absolute inset-y-0 ${slide.id == 2 ? "right-0" : "right-0"} hidden md:flex items-center pointer-events-none`}>
                         <Image
                             src={slide.image}
                             alt={slide.headline.replace("\n", " ")}
