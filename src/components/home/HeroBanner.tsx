@@ -30,18 +30,18 @@ const slides = [
         bookEmoji: "",
         image: "/images/banner/banner1.webp",
     },
-    {
-        id: 3,
-        badge: "PRE-ORDER",
-        headline: "New Releases\nArrive Daily",
-        subtext: "Be the first to own new titles",
-        cta: "Pre-Order Now",
-        href: "/category/new-releases",
-        gradient: "from-[#02114F] via-[#041B80] to-[#0524A3]",
-        accent: "text-orange-300",
-        bookEmoji: "",
-        image: "/images/banner/banner2.png",
-    },
+    // {
+    //     id: 3,
+    //     badge: "PRE-ORDER",
+    //     headline: "New Releases\nArrive Daily",
+    //     subtext: "Be the first to own new titles",
+    //     cta: "Pre-Order Now",
+    //     href: "/category/new-releases",
+    //     gradient: "from-[#02114F] via-[#041B80] to-[#0524A3]",
+    //     accent: "text-orange-300",
+    //     bookEmoji: "",
+    //     image: "/images/banner/banner2.png",
+    // },
 
 ];
 
@@ -65,7 +65,7 @@ export default function HeroBanner() {
             >
                 {/* Full-size banner image positioned in outer container */}
                 {slide.image && (
-                    <div className={`absolute inset-y-0 ${slide.id == 3 ? "right-8" : "right-0"} hidden md:flex items-center pointer-events-none`}>
+                    <div className={`absolute inset-y-0 ${slide.id == 2 ? "right-8" : "right-0"} hidden md:flex items-center pointer-events-none`}>
                         <Image
                             src={slide.image}
                             alt={slide.headline.replace("\n", " ")}
