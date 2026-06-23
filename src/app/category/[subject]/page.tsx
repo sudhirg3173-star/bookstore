@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Suspense } from "react";
-import { getBooksBySubject, getSubjects, subjectToSlug, slugToSubject } from "@/lib/books";
+import { getBooksBySubject, getSubjects, getPublishers, subjectToSlug, slugToSubject } from "@/lib/books";
 import ProductGrid from "@/components/shop/ProductGrid";
 import ProductGridSkeleton from "@/components/shop/ProductGridSkeleton";
 
@@ -25,6 +25,7 @@ export default function CategoryPage({ params }: Props) {
 
     const books = getBooksBySubject(subjectName);
     const allSubjects = getSubjects();
+    const publishers = getPublishers();
 
     return (
         <div className="bg-gray-50 min-h-screen">
@@ -77,6 +78,7 @@ export default function CategoryPage({ params }: Props) {
                     <ProductGrid
                         books={books}
                         subjects={allSubjects}
+                        publishers={publishers}
                         currentSubject={subjectName}
                         showSidebar={true}
                     />

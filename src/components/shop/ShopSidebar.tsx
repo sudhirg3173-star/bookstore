@@ -27,11 +27,11 @@ export default function ShopSidebar({
     onFilterChange,
     filters = { availability: [], minPrice: 0, maxPrice: 5000, publishers: [] },
 }: ShopSidebarProps) {
-    const [catOpen, setCatOpen] = useState(true);
-    const [availOpen, setAvailOpen] = useState(true);
-    // const [priceOpen, setPriceOpen] = useState(true);
-    const [pubOpen, setPubOpen] = useState(true);
+    const [openFilter, setOpenFilter] = useState<"publisher" | "categories" | "availability" | null>("publisher");
     const [mobileOpen, setMobileOpen] = useState(false);
+
+    const toggle = (name: "publisher" | "categories" | "availability") =>
+        setOpenFilter((prev) => (prev === name ? null : name));
 
     const handleAvailability = (val: string) => {
         const current = filters.availability;
@@ -51,20 +51,58 @@ export default function ShopSidebar({
 
     const SidebarContent = () => (
         <div className="space-y-4">
+
+            {/* Publisher */}
+            {publishers.length > 0 && (
+                <div className="border border-gray-200 rounded-xl overflow-hidden">
+                    <button
+                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 font-semibold text-sm text-gray-800"
+                        onClick={() => toggle("publisher")}
+                    >
+                        Publisher
+                        {openFilter === "publisher" ? (
+                            <ChevronUp className="w-4 h-4 text-gray-500" />
+                        ) : (
+                            <ChevronDown className="w-4 h-4 text-gray-500" />
+                        )}
+                    </button>
+                    {openFilter === "publisher" && (
+                        <div className="px-4 py-3 space-y-2 max-h-48 overflow-y-auto">
+                            {publishers.map((pub) => (
+                                <label
+                                    key={pub}
+                                    className="flex items-center gap-2.5 cursor-pointer group"
+                                >
+                                    <input
+                                        type="checkbox"
+                                        checked={(filters.publishers ?? []).includes(pub)}
+                                        onChange={() => handlePublisher(pub)}
+                                        className="w-4 h-4 rounded border-gray-300 text-primary accent-primary"
+                                    />
+                                    <span className="text-sm text-gray-600 group-hover:text-gray-800">
+                                        {pub}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Categories */}
             <div className="border border-gray-200 rounded-xl overflow-hidden">
                 <button
                     className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 font-semibold text-sm text-gray-800"
-                    onClick={() => setCatOpen(!catOpen)}
+                    onClick={() => toggle("categories")}
                 >
                     Categories
-                    {catOpen ? (
+                    {openFilter === "categories" ? (
                         <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
                         <ChevronDown className="w-4 h-4 text-gray-500" />
                     )}
                 </button>
-                {catOpen && (
+                {openFilter === "categories" && (
                     <div className="px-4 py-3 space-y-1">
                         <Link
                             href="/shop"
@@ -91,57 +129,20 @@ export default function ShopSidebar({
                 )}
             </div>
 
-            {/* Publisher */}
-            {publishers.length > 0 && (
-                <div className="border border-gray-200 rounded-xl overflow-hidden">
-                    <button
-                        className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 font-semibold text-sm text-gray-800"
-                        onClick={() => setPubOpen(!pubOpen)}
-                    >
-                        Publisher
-                        {pubOpen ? (
-                            <ChevronUp className="w-4 h-4 text-gray-500" />
-                        ) : (
-                            <ChevronDown className="w-4 h-4 text-gray-500" />
-                        )}
-                    </button>
-                    {pubOpen && (
-                        <div className="px-4 py-3 space-y-2 max-h-48 overflow-y-auto">
-                            {publishers.map((pub) => (
-                                <label
-                                    key={pub}
-                                    className="flex items-center gap-2.5 cursor-pointer group"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        checked={(filters.publishers ?? []).includes(pub)}
-                                        onChange={() => handlePublisher(pub)}
-                                        className="w-4 h-4 rounded border-gray-300 text-primary accent-primary"
-                                    />
-                                    <span className="text-sm text-gray-600 group-hover:text-gray-800">
-                                        {pub}
-                                    </span>
-                                </label>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-
             {/* Availability */}
             <div className="border border-gray-200 rounded-xl overflow-hidden">
                 <button
                     className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 font-semibold text-sm text-gray-800"
-                    onClick={() => setAvailOpen(!availOpen)}
+                    onClick={() => toggle("availability")}
                 >
                     Availability
-                    {availOpen ? (
+                    {openFilter === "availability" ? (
                         <ChevronUp className="w-4 h-4 text-gray-500" />
                     ) : (
                         <ChevronDown className="w-4 h-4 text-gray-500" />
                     )}
                 </button>
-                {availOpen && (
+                {openFilter === "availability" && (
                     <div className="px-4 py-3 space-y-2">
                         {["In Stock", "Out of Stock"].map((val) => (
                             <label

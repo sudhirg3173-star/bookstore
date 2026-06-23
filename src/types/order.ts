@@ -18,6 +18,12 @@ export interface OrderBilling {
     pincode: string;
 }
 
+export interface OrderBillingAddress {
+    address: string;
+    state: string;
+    pincode: string;
+}
+
 export type DeliveryStatus = "Processing" | "On hold" | "Completed" | "Cancelled" | "Refunded" | "Failed";
 
 export interface Order {
@@ -30,5 +36,6 @@ export interface Order {
     amount: number;
     items: OrderItem[];
     billing: OrderBilling;
+    billingAddress?: OrderBillingAddress;
     createdAt: string;
 }

@@ -1566,7 +1566,7 @@ export default function ControlCenterClient() {
 
                             {/* Billing */}
                             <section>
-                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Billing Details</h3>
+                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Delivery &amp; Contact Details</h3>
                                 <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
                                     <div>
                                         <dt className="text-gray-500">Name</dt>
@@ -1589,10 +1589,33 @@ export default function ControlCenterClient() {
                                         <dd className="text-gray-700">{selectedOrder.billing.state}</dd>
                                     </div>
                                     <div className="col-span-2">
-                                        <dt className="text-gray-500">Address</dt>
+                                        <dt className="text-gray-500">Delivery Address</dt>
                                         <dd className="text-gray-700">{selectedOrder.billing.address}</dd>
                                     </div>
                                 </dl>
+                            </section>
+
+                            {/* Billing Address */}
+                            <section>
+                                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Billing Address</h3>
+                                {selectedOrder.billingAddress ? (
+                                    <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                                        <div>
+                                            <dt className="text-gray-500">Pincode</dt>
+                                            <dd className="text-gray-700">{selectedOrder.billingAddress.pincode}</dd>
+                                        </div>
+                                        <div>
+                                            <dt className="text-gray-500">State</dt>
+                                            <dd className="text-gray-700">{selectedOrder.billingAddress.state}</dd>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <dt className="text-gray-500">Address</dt>
+                                            <dd className="text-gray-700">{selectedOrder.billingAddress.address}</dd>
+                                        </div>
+                                    </dl>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">Same as delivery address.</p>
+                                )}
                             </section>
 
                             {/* Items */}

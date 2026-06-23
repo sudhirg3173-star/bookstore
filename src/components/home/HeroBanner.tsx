@@ -16,7 +16,7 @@ const slides = [
         gradient: "from-[#001329] via-[#001329] to-[#001329]",
         accent: "text-amber-400",
         bookEmoji: "",
-        image: "/images/banner/banner3.webp",
+        image: "/images/banner/Hero-Banner01.webp",
     },
     {
         id: 2,
@@ -28,21 +28,8 @@ const slides = [
         gradient: "from-[#001329] via-[#001329] to-[#001329]",
         accent: "text-emerald-300",
         bookEmoji: "",
-        image: "/images/banner/banner1.webp",
-    },
-    // {
-    //     id: 3,
-    //     badge: "PRE-ORDER",
-    //     headline: "New Releases\nArrive Daily",
-    //     subtext: "Be the first to own new titles",
-    //     cta: "Pre-Order Now",
-    //     href: "/category/new-releases",
-    //     gradient: "from-[#02114F] via-[#041B80] to-[#0524A3]",
-    //     accent: "text-orange-300",
-    //     bookEmoji: "",
-    //     image: "/images/banner/banner2.png",
-    // },
-
+        image: "/images/banner/Hero-Banner02.webp",
+    }
 ];
 
 export default function HeroBanner() {
@@ -61,7 +48,7 @@ export default function HeroBanner() {
         <section className="relative overflow-hidden">
             <div
                 className={`bg-gradient-to-br ${slide.gradient} transition-all duration-700 ease-in-out relative`}
-                style={{ minHeight: "250px" }}
+                style={{ minHeight: "480px" }}
             >
                 {/* Full-size banner image positioned in outer container */}
                 {slide.image && (

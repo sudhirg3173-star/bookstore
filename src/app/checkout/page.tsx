@@ -25,7 +25,7 @@ import { useAuthStore } from "@/store/authStore";
 import { getFirebaseFirestore } from "@/lib/firebaseClient";
 import { getBookUrl } from "@/lib/utils";
 import { CreatePaymentRequestResponse } from "@/types/payment";
-import { Order } from "@/types/order";
+import { Order, OrderBillingAddress } from "@/types/order";
 import { formatPrice } from "@/store/currencyStore";
 
 /** Convert a price in `fromCurrency` to INR using the rates map (base = INR). */
@@ -75,6 +75,12 @@ interface BillingForm {
     pincode: string;
 }
 
+interface BillingAddressForm {
+    address: string;
+    state: string;
+    pincode: string;
+}
+
 export default function CheckoutPage() {
     const router = useRouter();
     const { items, clearCart } = useCartStore();
@@ -107,6 +113,9 @@ export default function CheckoutPage() {
     const [error, setError] = useState<string | null>(null);
     const [form, setForm] = useState<BillingForm>({ name: "", email: "", phone: "", address: "", state: "", pincode: "" });
     const [fieldErrors, setFieldErrors] = useState<Partial<BillingForm>>({});
+    const [billingSameAsDelivery, setBillingSameAsDelivery] = useState(true);
+    const [billingAddressForm, setBillingAddressForm] = useState<BillingAddressForm>({ address: "", state: "", pincode: "" });
+    const [billingAddressErrors, setBillingAddressErrors] = useState<Partial<BillingAddressForm>>({});
     const paymentUrlRef = useRef<string | null>(null);
     const pendingOrderDataRef = useRef<Omit<Order, "id"> | null>(null);
 
@@ -169,7 +178,20 @@ export default function CheckoutPage() {
             errors.pincode = "Enter a valid 6-digit pincode";
         }
         setFieldErrors(errors);
-        return Object.keys(errors).length === 0;
+
+        const baErrors: Partial<BillingAddressForm> = {};
+        if (!billingSameAsDelivery) {
+            if (!billingAddressForm.address.trim()) baErrors.address = "Billing address is required";
+            if (!billingAddressForm.state) baErrors.state = "State is required";
+            if (!billingAddressForm.pincode.trim()) {
+                baErrors.pincode = "Pincode is required";
+            } else if (!/^\d{6}$/.test(billingAddressForm.pincode)) {
+                baErrors.pincode = "Enter a valid 6-digit pincode";
+            }
+        }
+        setBillingAddressErrors(baErrors);
+
+        return Object.keys(errors).length === 0 && Object.keys(baErrors).length === 0;
     }
 
     function configurInstamojo(paymentUrl: string) {
@@ -289,6 +311,13 @@ export default function CheckoutPage() {
                     state: form.state,
                     pincode: form.pincode.trim(),
                 },
+                ...(!billingSameAsDelivery ? {
+                    billingAddress: {
+                        address: billingAddressForm.address.trim(),
+                        state: billingAddressForm.state,
+                        pincode: billingAddressForm.pincode.trim(),
+                    } satisfies OrderBillingAddress,
+                } : {}),
                 createdAt: new Date().toISOString(),
             };
 
@@ -478,6 +507,104 @@ export default function CheckoutPage() {
                                                 <p className="text-xs text-red-500 mt-1">{fieldErrors.pincode}</p>
                                             )}
                                         </div>
+                                    </div>
+
+                                    {/* Billing Address */}
+                                    <div className="pt-4 border-t border-gray-100">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                                                <MapPin className="w-4 h-4 text-primary" />
+                                                Billing Address
+                                            </h3>
+                                            <label className="flex items-center gap-2 cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={billingSameAsDelivery}
+                                                    onChange={(e) => {
+                                                        setBillingSameAsDelivery(e.target.checked);
+                                                        if (e.target.checked) setBillingAddressErrors({});
+                                                    }}
+                                                    className="w-4 h-4 rounded accent-primary"
+                                                />
+                                                <span className="text-xs text-gray-500">Same as delivery address</span>
+                                            </label>
+                                        </div>
+
+                                        {billingSameAsDelivery ? (
+                                            <p className="text-xs text-gray-400 italic">Billing address will match the delivery address above.</p>
+                                        ) : (
+                                            <div className="space-y-3">
+                                                {/* Billing Address textarea */}
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        Address <span className="text-red-500">*</span>
+                                                    </label>
+                                                    <div className="relative">
+                                                        <MapPin className="absolute left-3 top-3 w-4 h-4 text-gray-400" />
+                                                        <textarea
+                                                            value={billingAddressForm.address}
+                                                            onChange={(e) => {
+                                                                setBillingAddressForm({ ...billingAddressForm, address: e.target.value });
+                                                                setBillingAddressErrors({ ...billingAddressErrors, address: undefined });
+                                                            }}
+                                                            placeholder="Flat / House No., Street, Area, City, State"
+                                                            rows={3}
+                                                            className={`w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors resize-none ${billingAddressErrors.address ? "border-red-400" : "border-gray-200"}`}
+                                                        />
+                                                    </div>
+                                                    {billingAddressErrors.address && (
+                                                        <p className="text-xs text-red-500 mt-1">{billingAddressErrors.address}</p>
+                                                    )}
+                                                </div>
+
+                                                {/* Billing State + Pincode */}
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            State <span className="text-red-500">*</span>
+                                                        </label>
+                                                        <select
+                                                            value={billingAddressForm.state}
+                                                            onChange={(e) => {
+                                                                setBillingAddressForm({ ...billingAddressForm, state: e.target.value });
+                                                                setBillingAddressErrors({ ...billingAddressErrors, state: undefined });
+                                                            }}
+                                                            className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors bg-white ${billingAddressErrors.state ? "border-red-400" : "border-gray-200"}`}
+                                                        >
+                                                            <option value="">Select state</option>
+                                                            {INDIAN_STATES.map((s) => (
+                                                                <option key={s} value={s}>{s}</option>
+                                                            ))}
+                                                        </select>
+                                                        {billingAddressErrors.state && (
+                                                            <p className="text-xs text-red-500 mt-1">{billingAddressErrors.state}</p>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                            Pincode <span className="text-red-500">*</span>
+                                                        </label>
+                                                        <div className="relative">
+                                                            <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                            <input
+                                                                type="text"
+                                                                value={billingAddressForm.pincode}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                                                                    setBillingAddressForm({ ...billingAddressForm, pincode: val });
+                                                                    setBillingAddressErrors({ ...billingAddressErrors, pincode: undefined });
+                                                                }}
+                                                                placeholder="6-digit pincode"
+                                                                className={`w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors ${billingAddressErrors.pincode ? "border-red-400" : "border-gray-200"}`}
+                                                            />
+                                                        </div>
+                                                        {billingAddressErrors.pincode && (
+                                                            <p className="text-xs text-red-500 mt-1">{billingAddressErrors.pincode}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
