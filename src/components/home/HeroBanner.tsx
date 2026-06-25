@@ -16,7 +16,7 @@ const slides = [
         gradient: "from-[#001329] via-[#001329] to-[#001329]",
         accent: "text-amber-400",
         bookEmoji: "",
-        image: "/images/banner/Hero-Banner01.webp",
+        image: "/images/banner/banner3.webp",
     },
     {
         id: 2,
@@ -28,7 +28,7 @@ const slides = [
         gradient: "from-[#001329] via-[#001329] to-[#001329]",
         accent: "text-emerald-300",
         bookEmoji: "",
-        image: "/images/banner/Hero-Banner02.webp",
+        image: "/images/banner/banner1.webp",
     }
 ];
 
@@ -52,7 +52,7 @@ export default function HeroBanner() {
             >
                 {/* Full-size banner image positioned in outer container */}
                 {slide.image && (
-                    <div className={`absolute inset-y-0 ${slide.id == 2 ? "right-0" : "right-0"} hidden md:flex items-center pointer-events-none`}>
+                    <div className="absolute inset-y-0 right-0 hidden md:flex items-center justify-end pointer-events-none w-[65%]">
                         <Image
                             src={slide.image}
                             alt={slide.headline.replace("\n", " ")}
