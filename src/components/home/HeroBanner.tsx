@@ -56,10 +56,8 @@ export default function HeroBanner() {
                         <Image
                             src={slide.image}
                             alt={slide.headline.replace("\n", " ")}
-                            width={0}
-                            height={0}
-                            sizes="50vw"
-                            className="w-auto h-full object-contain drop-shadow-2xl"
+                            fill
+                            className="object-contain object-right drop-shadow-2xl"
                             priority
                         />
                     </div>
