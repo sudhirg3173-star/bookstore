@@ -299,14 +299,14 @@ export default function Header({ subjects }: { subjects: string[] }) {
                         <div className="pb-3 animate-slide-down">
                             <form onSubmit={handleSearch} className="relative flex gap-2">
                                 <div className="relative flex-1 flex items-center">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/80 pointer-events-none" />
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/50 pointer-events-none" />
                                     <input
                                         ref={searchRef}
                                         type="text"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         placeholder={searchType === "standards" ? "Search standards, publishers…" : "Search books, authors, ISBN…"}
-                                        className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-black/80 focus:outline-none focus:border-primary focus:bg-white/15 transition-all"
+                                        className="w-full pl-10 pr-4 py-2.5 bg-white/10 border border-white/20 rounded-lg text-white placeholder-black/50 focus:outline-none focus:border-primary focus:bg-white/15 transition-all"
                                     />
                                 </div>
                                 <select
