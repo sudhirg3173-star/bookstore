@@ -92,10 +92,24 @@ export default function StandardDetailClient({ standard }: Props) {
 
                             {/* Price */}
                             <div className="flex items-baseline gap-3 mb-5 pb-5 border-b border-gray-100">
+                            {discounted ? (
+                                <>
+                                    <span className="text-3xl font-extrabold text-primary">
+                                        {formatPrice(discounted, standard.currency)}
+                                    </span>
+                                    <span className="text-lg text-gray-400 line-through">
+                                        {formatPrice(standard.price, standard.currency)}
+                                    </span>
+                                    <span className="text-sm bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">
+                                        Save {standard.discount}%
+                                    </span>
+                                </>
+                            ) : (
                                 <span className="text-3xl font-extrabold text-primary">
                                     {formatPrice(standard.price, standard.currency)}
                                 </span>
-                                <span className="text-xs text-gray-400">Official print edition</span>
+                            )}
+				                <span className="text-xs text-gray-400">Official print edition</span>
                             </div>
 
                             {/* Meta grid */}
