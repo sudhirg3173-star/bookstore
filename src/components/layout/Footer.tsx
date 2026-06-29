@@ -62,7 +62,7 @@ export default function Footer({ subjects: _subjects }: { subjects: string[] }) 
                         Your one-stop destination for academic, professional, and educational
                         books. Discover knowledge that transforms lives.
                     </p>
-                    {/* <div className="flex gap-3">
+                    <div className="flex gap-3">
                         {[Facebook, Twitter, Instagram, Youtube].map((Icon, i) => (
                             <a
                                 key={i}
@@ -73,29 +73,8 @@ export default function Footer({ subjects: _subjects }: { subjects: string[] }) 
                                 <Icon className="w-4 h-4" />
                             </a>
                         ))}
-                    </div> */}
-                    const socialLinks = [
-  {
-    icon: Facebook,
-    url: "https://www.facebook.com/kabdwalbook/",
-    label: "Facebook",
-  },
-  {
-    icon: Twitter,
-    url: "https://x.com/", // Replace with your X/Twitter profile
-    label: "Twitter",
-  },
-  {
-    icon: Instagram,
-    url: "https://www.instagram.com/kabdwalbook/",
-    label: "Instagram",
-  },
-  {/* {
-    icon: Youtube,
-    url: "https://www.youtube.com/", // Replace with your YouTube channel
-    label: "YouTube",
-  }, */}
-];
+                    </div>
+                  
                 </div>
 
                 {/* Address */}
