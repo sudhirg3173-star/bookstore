@@ -24,6 +24,10 @@ export default function StandardDetailClient({ standard }: Props) {
     const toggleWishlist = useWishlistStore((s) => s.toggleItem);
     const isWishlisted = useWishlistStore((s) => s.hasItem(book.sku));
 
+    const discounted = standard.discount
+        ? standard.price * (1 - standard.discount / 100)
+        : null;
+
     const handleAddToCart = () => {
         addToCart(book, quantity);
         setAddedToCart(true);
