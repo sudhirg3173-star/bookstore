@@ -83,6 +83,65 @@ export default function Header({ subjects }: { subjects: string[] }) {
         s.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
     return (
+        <div class="id-top-bar">
+        <div class="id-top-content">
+
+            <span class="id-message">
+                Happy Independence Day
+            </span>
+
+        </div>
+    </div>
+
+
+    <!-- =========================
+TRICOLOR NAVIGATION LINE
+Place below existing header
+========================== -->
+
+    <div class="id-nav-line">
+
+        <div class="saffron"></div>
+
+        <div class="white"></div>
+
+        <div class="green"></div>
+
+    </div>
+
+
+    <!-- =========================
+LEFT WAVING FLAG
+========================== -->
+
+    <div class="flag-left">
+
+        <img src="flag.png" alt="Indian Flag">
+
+    </div>
+
+
+    <!-- =========================
+RIGHT WAVING FLAG
+========================== -->
+
+    <div class="flag-right">
+
+        <img src="flag.png" alt="Indian Flag">
+
+    </div>
+
+
+    <!-- =========================
+ROTATING ASHOKA CHAKRA
+========================== -->
+
+    <div class="ashoka-chakra">
+
+        <img src="Chakra.png" alt="Ashoka Chakra">
+
+    </div>
+
         <header className="sticky top-0 z-50 shadow-md">
             {/* Top bar */}
             {/* <div className="bg-brand text-white py-2 text-center text-xs tracking-wide hidden md:block">
