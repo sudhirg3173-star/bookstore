@@ -82,7 +82,34 @@ export default function Header({ subjects }: { subjects: string[] }) {
     const subjectSlug = (s: string) =>
         s.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 
+
     return (
+
+<!-- Independence Day Announcement -->
+<div id="kbi-independence-bar">
+
+    <div class="kbi-tricolor-dot kbi-dot1"></div>
+    <div class="kbi-tricolor-dot kbi-dot2"></div>
+    <div class="kbi-tricolor-dot kbi-dot3"></div>
+
+    <div class="kbi-independence-content">
+
+        <div class="kbi-mini-flag">
+            <div class="kbi-flag-saffron"></div>
+            <div class="kbi-flag-white"></div>
+            <div class="kbi-flag-green"></div>
+        </div>
+
+        <div class="kbi-chakra"></div>
+
+        <div class="kbi-independence-text">
+            🇮🇳 <strong>Happy Independence Day!</strong>
+            &nbsp; Celebrating <span>Freedom • Knowledge • Progress</span>
+        </div>
+
+    </div>
+</div>
+
             <header className="sticky top-0 z-50 shadow-md">
             {/* Top bar */}
             {/* <div className="bg-brand text-white py-2 text-center text-xs tracking-wide hidden md:block">

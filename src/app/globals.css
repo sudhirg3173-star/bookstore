@@ -75,3 +75,242 @@
         overflow: hidden;
     }
 }
+
+/* ---------- Independence Day Bar ---------- */
+
+#kbi-independence-bar {
+    position: relative;
+    z-index: 99999;
+    width: 100%;
+    background: linear-gradient(
+        90deg,
+        #ff9933 0%,
+        #ff9933 33.33%,
+        #ffffff 33.33%,
+        #ffffff 66.66%,
+        #138808 66.66%,
+        #138808 100%
+    );
+    padding: 10px 20px;
+    box-sizing: border-box;
+    text-align: center;
+    overflow: hidden;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* White content panel */
+.kbi-independence-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    min-height: 42px;
+    position: relative;
+    z-index: 2;
+}
+
+/* Ashoka Chakra */
+.kbi-chakra {
+    width: 34px;
+    height: 34px;
+    border: 3px solid #1a3c8c;
+    border-radius: 50%;
+    position: relative;
+    flex-shrink: 0;
+    animation: kbiChakraRotate 12s linear infinite;
+}
+
+.kbi-chakra::before,
+.kbi-chakra::after {
+    content: "";
+    position: absolute;
+    background: #1a3c8c;
+    left: 50%;
+    top: 50%;
+    transform-origin: center;
+}
+
+.kbi-chakra::before {
+    width: 2px;
+    height: 27px;
+    transform: translate(-50%, -50%);
+    box-shadow:
+        0 0 0 0 #1a3c8c;
+}
+
+.kbi-chakra::after {
+    width: 27px;
+    height: 2px;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes kbiChakraRotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Text */
+.kbi-independence-text {
+    background: rgba(255,255,255,0.96);
+    padding: 7px 20px;
+    border-radius: 30px;
+    color: #18233a;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.10);
+}
+
+.kbi-independence-text strong {
+    color: #d35400;
+    font-weight: 800;
+}
+
+.kbi-independence-text span {
+    color: #138808;
+}
+
+/* Small flag */
+.kbi-mini-flag {
+    width: 34px;
+    height: 23px;
+    border-radius: 2px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.18);
+}
+
+.kbi-flag-saffron {
+    height: 33.33%;
+    background: #ff9933;
+}
+
+.kbi-flag-white {
+    height: 33.33%;
+    background: #fff;
+    position: relative;
+}
+
+.kbi-flag-green {
+    height: 33.33%;
+    background: #138808;
+}
+
+.kbi-flag-white::after {
+    content: "✺";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -52%);
+    color: #1a3c8c;
+    font-size: 11px;
+}
+
+/* Decorative floating dots */
+.kbi-tricolor-dot {
+    position: absolute;
+    border-radius: 50%;
+    opacity: 0.35;
+    animation: kbiFloat 5s ease-in-out infinite;
+}
+
+.kbi-dot1 {
+    width: 8px;
+    height: 8px;
+    background: #ff9933;
+    left: 8%;
+    top: 12px;
+}
+
+.kbi-dot2 {
+    width: 6px;
+    height: 6px;
+    background: #138808;
+    right: 12%;
+    top: 25px;
+    animation-delay: 1s;
+}
+
+.kbi-dot3 {
+    width: 5px;
+    height: 5px;
+    background: #1a3c8c;
+    left: 25%;
+    bottom: 8px;
+    animation-delay: 2s;
+}
+
+@keyframes kbiFloat {
+    0%, 100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-7px);
+    }
+}
+
+/* ---------- Subtle Website Tricolour Accent ---------- */
+
+body.kbi-independence-active::before {
+    content: "";
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 4px;
+    height: 100vh;
+    z-index: 99998;
+    pointer-events: none;
+    background: linear-gradient(
+        to bottom,
+        #ff9933 0%,
+        #ff9933 33.33%,
+        #ffffff 33.33%,
+        #ffffff 66.66%,
+        #138808 66.66%,
+        #138808 100%
+    );
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 600px) {
+
+    #kbi-independence-bar {
+        padding: 8px 10px;
+    }
+
+    .kbi-independence-content {
+        gap: 8px;
+    }
+
+    .kbi-independence-text {
+        font-size: 12px;
+        padding: 6px 11px;
+        line-height: 1.35;
+    }
+
+    .kbi-chakra {
+        width: 27px;
+        height: 27px;
+        border-width: 2px;
+    }
+
+    .kbi-chakra::before {
+        height: 21px;
+    }
+
+    .kbi-chakra::after {
+        width: 21px;
+    }
+
+    .kbi-mini-flag {
+        width: 29px;
+        height: 20px;
+    }
+}
