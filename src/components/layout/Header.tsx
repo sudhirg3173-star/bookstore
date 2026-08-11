@@ -141,6 +141,696 @@ ROTATING ASHOKA CHAKRA
         <img src="Chakra.png" alt="Ashoka Chakra">
 
     </div>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+
+    --saffron: #FF9933;
+    --white: #ffffff;
+    --green: #138808;
+    --blue: #0A5AA8;
+    --dark: #1d1d1d;
+
+}
+
+* {
+
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+
+}
+
+body {
+
+    font-family: 'Poppins', sans-serif;
+
+}
+
+
+.id-top-bar {
+
+    width: 100%;
+
+    position: relative;
+
+    overflow: hidden;
+
+    background: linear-gradient(90deg,
+            #FF9933 0%,
+            #ffffff 50%,
+            #138808 100%);
+
+    border-bottom: 1px solid rgba(0, 0, 0, .08);
+
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .08);
+
+    z-index: 9999;
+
+}
+
+.id-top-content {
+
+    max-width: 1400px;
+
+    margin: auto;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding: 12px 20px;
+
+}
+
+.id-message {
+
+    color: #030c8a;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    letter-spacing: .4px;
+
+}
+
+
+/* Shine */
+
+.id-top-bar::before {
+
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+
+    left: -40%;
+
+    width: 40%;
+
+    height: 100%;
+
+    background: linear-gradient(90deg,
+            transparent,
+            rgba(255, 255, 255, .65),
+            transparent);
+
+    animation: shine 6s infinite;
+
+}
+
+@keyframes shine {
+
+    0% {
+
+        left: -40%;
+
+    }
+
+    100% {
+
+        left: 140%;
+
+    }
+
+}
+
+@keyframes flagPulse {
+
+    0%,
+    100% {
+
+        transform: scale(1);
+
+    }
+
+    50% {
+
+        transform: scale(1.15);
+
+    }
+
+}
+
+
+
+/*=========================================
+TRICOLOR NAVIGATION LINE
+=========================================*/
+
+.id-nav-line {
+
+    display: flex;
+
+    width: 100%;
+
+    height: 5px;
+
+    overflow: hidden;
+
+}
+
+.id-nav-line .saffron {
+
+    width: 33.33%;
+
+    background: #FF9933;
+
+    animation: leftMove 4s linear infinite;
+
+}
+
+.id-nav-line .white {
+
+    width: 33.33%;
+
+    background: #ffffff;
+
+    position: relative;
+
+}
+
+.id-nav-line .green {
+
+    width: 33.33%;
+
+    background: #138808;
+
+    animation: rightMove 4s linear infinite;
+
+}
+
+/* Blue Center Dot */
+
+.id-nav-line .white::after {
+
+    content: "";
+
+    width: 12px;
+
+    height: 12px;
+
+    border-radius: 50%;
+
+    background: #0A5AA8;
+
+    position: absolute;
+
+    top: 50%;
+
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    box-shadow:
+
+        0 0 8px rgba(10, 90, 168, .4),
+
+        0 0 16px rgba(10, 90, 168, .3);
+
+}
+
+
+/* Animation */
+
+@keyframes leftMove {
+
+    0% {
+
+        transform: translateX(0);
+
+    }
+
+    50% {
+
+        transform: translateX(-5px);
+
+    }
+
+    100% {
+
+        transform: translateX(0);
+
+    }
+
+}
+
+@keyframes rightMove {
+
+    0% {
+
+        transform: translateX(0);
+
+    }
+
+    50% {
+
+        transform: translateX(5px);
+
+    }
+
+    100% {
+
+        transform: translateX(0);
+
+    }
+
+}
+
+
+/*=========================================
+PREMIUM SHADOW
+=========================================*/
+
+.id-top-bar {
+
+    backdrop-filter: blur(10px);
+
+    -webkit-backdrop-filter: blur(10px);
+
+}
+
+
+/*=========================================
+HOVER EFFECT
+=========================================*/
+
+.id-message:hover {
+
+    color: #0A5AA8;
+
+    transition: .3s;
+
+}
+
+
+/*=========================================
+RESPONSIVE
+=========================================*/
+
+@media(max-width:992px) {
+
+    .id-top-content {
+
+        flex-direction: column;
+
+        gap: 6px;
+
+        padding: 10px;
+
+    }
+
+    .id-message {
+
+        font-size: 14px;
+
+        text-align: center;
+
+    }
+
+}
+
+@media(max-width:768px) {
+
+    .id-top-content {
+
+        padding: 8px;
+
+    }
+
+
+
+    .id-message {
+
+        font-size: 13px;
+
+        line-height: 1.6;
+
+    }
+
+    .id-nav-line {
+
+        height: 4px;
+
+    }
+
+}
+
+@media(max-width:480px) {
+
+    .id-message {
+
+        font-size: 12px;
+
+        padding: 0 10px;
+
+    }
+
+
+
+}
+
+/*==================================================
+      PART 2
+      FLAGS • ASHOKA CHAKRA 
+==================================================*/
+
+
+/*==============================
+LEFT & RIGHT FLAGS
+===============================*/
+
+.flag-left,
+.flag-right {
+
+    position: fixed;
+
+    top: 120px;
+
+    z-index: 9999;
+
+    pointer-events: none;
+
+}
+
+.flag-left {
+
+    left: 15px;
+
+}
+
+.flag-right {
+
+    right: 15px;
+
+}
+
+
+/*==============================
+FLAG IMAGE
+===============================*/
+
+.flag-left img,
+.flag-right img {
+
+    width: 70px;
+
+    height: auto;
+
+    filter: drop-shadow(0 8px 15px rgba(0, 0, 0, .18));
+
+    transform-origin: left center;
+
+    transform-style: preserve-3d;
+
+    animation: flagWave 3s ease-in-out infinite;
+
+}
+
+
+/* Different timing */
+
+.flag-right img {
+
+    animation-delay: 1.2s;
+
+}
+
+
+/*==============================
+3D FLAG WAVE
+===============================*/
+
+@keyframes flagWave {
+
+    0% {
+
+        transform:
+            perspective(900px) rotateY(0deg) rotateZ(0deg);
+
+    }
+
+    15% {
+
+        transform:
+            perspective(900px) rotateY(-14deg) rotateZ(2deg);
+
+    }
+
+    30% {
+
+        transform:
+            perspective(900px) rotateY(10deg) rotateZ(-2deg);
+
+    }
+
+    45% {
+
+        transform:
+            perspective(900px) rotateY(-8deg) rotateZ(2deg);
+
+    }
+
+    60% {
+
+        transform:
+            perspective(900px) rotateY(7deg) rotateZ(-1deg);
+
+    }
+
+    75% {
+
+        transform:
+            perspective(900px) rotateY(-4deg);
+
+    }
+
+    100% {
+
+        transform:
+            perspective(900px) rotateY(0deg);
+
+    }
+
+}
+
+
+/*==============================
+FLAG FLOATING
+===============================*/
+
+.flag-left {
+
+    animation: floatLeft 5s ease-in-out infinite;
+
+}
+
+.flag-right {
+
+    animation: floatRight 5s ease-in-out infinite;
+
+}
+
+@keyframes floatLeft {
+
+    0%,
+    100% {
+
+        transform: translateY(0);
+
+    }
+
+    50% {
+
+        transform: translateY(-12px);
+
+    }
+
+}
+
+@keyframes floatRight {
+
+    0%,
+    100% {
+
+        transform: translateY(0);
+
+    }
+
+    50% {
+
+        transform: translateY(-12px);
+
+    }
+
+}
+
+
+
+/*==============================
+ASHOKA CHAKRA
+===============================*/
+
+.ashoka-chakra {
+
+    position: fixed;
+
+    right: 40px;
+
+    bottom: 170px;
+
+    width: 70px;
+
+    height: 70px;
+
+    z-index: 9999;
+
+    pointer-events: none;
+
+    opacity: .9;
+
+}
+
+.ashoka-chakra img {
+
+    width: 100%;
+
+    height: auto;
+
+    animation: chakraRotate 18s linear infinite;
+
+    filter: drop-shadow(0 5px 12px rgba(10, 90, 168, .3));
+
+}
+
+
+@keyframes chakraRotate {
+
+    from {
+
+        transform: rotate(0deg);
+
+    }
+
+    to {
+
+        transform: rotate(360deg);
+
+    }
+
+}
+
+
+
+
+/*==============================
+SMOOTH FADE
+===============================*/
+
+.flag-left,
+.flag-right,
+.ashoka-chakra {
+
+    animation-duration: 5s;
+
+    animation-fill-mode: both;
+
+}
+
+
+
+
+/*==============================
+RESPONSIVE
+===============================*/
+
+@media(max-width:992px) {
+
+    .flag-left img,
+    .flag-right img {
+
+        width: 55px;
+
+    }
+
+    .ashoka-chakra {
+
+        width: 55px;
+
+        height: 55px;
+
+        right: 20px;
+
+    }
+
+}
+
+
+@media(max-width:768px) {
+
+    .flag-left {
+
+        left: 8px;
+
+        top: 90px;
+
+    }
+
+    .flag-right {
+
+        right: 8px;
+
+        top: 90px;
+
+    }
+
+    .flag-left img,
+    .flag-right img {
+
+        width: 42px;
+
+    }
+
+    .ashoka-chakra {
+
+        width: 45px;
+
+        height: 45px;
+
+        bottom: 120px;
+
+    }
+
+}
+
+
+@media(max-width:480px) {
+
+    .flag-left img,
+    .flag-right img {
+
+        width: 35px;
+
+    }
+
+    .ashoka-chakra {
+
+        width: 36px;
+
+        height: 36px;
+
+    }
+
+}
+
+
+
 
             <header className="sticky top-0 z-50 shadow-md">
             {/* Top bar */}
