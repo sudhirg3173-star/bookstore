@@ -30,10 +30,10 @@ export default function BookCursor() {
 
             if (cursorRef.current) {
                 cursorRef.current.style.left =
-                    `${currentX.current + 16}px`;
+                    `${currentX.current + 15}px`;
 
                 cursorRef.current.style.top =
-                    `${currentY.current + 16}px`;
+                    `${currentY.current + 15}px`;
             }
 
             animationFrame =
@@ -63,45 +63,48 @@ export default function BookCursor() {
                 top: "0px",
                 zIndex: 2147483647,
                 pointerEvents: "none",
-                width: "46px",
-                height: "32px",
+                width: "48px",
+                height: "34px",
                 willChange: "left, top",
             }}
         >
             <div className="india-flag-cursor">
-                <div className="flag-saffron"></div>
 
+                {/* Saffron */}
+                <div className="flag-saffron" />
+
+                {/* White + Ashoka Chakra */}
                 <div className="flag-white">
                     <div className="ashoka-chakra">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                        {Array.from({ length: 24 }).map(
+                            (_, i) => (
+                                <span
+                                    key={i}
+                                    style={{
+                                        transform: `rotate(${i * 15}deg)`,
+                                    }}
+                                />
+                            )
+                        )}
                     </div>
                 </div>
 
-                <div className="flag-green"></div>
+                {/* Green */}
+                <div className="flag-green" />
+
             </div>
 
             <style jsx>{`
                 .india-flag-cursor {
-                    width: 46px;
-                    height: 31px;
+                    width: 48px;
+                    height: 32px;
                     position: relative;
                     overflow: hidden;
                     border-radius: 2px;
                     box-shadow:
-                        0 3px 8px rgba(0, 0, 0, 0.25);
+                        0 3px 8px rgba(0, 0, 0, 0.28);
                     transform-origin: left center;
-                    animation: flagWave 1.8s ease-in-out infinite;
+                    animation: flagWave 1.6s ease-in-out infinite;
                 }
 
                 .flag-saffron,
@@ -124,32 +127,40 @@ export default function BookCursor() {
                     background: #138808;
                 }
 
+                /* Ashoka Chakra */
                 .ashoka-chakra {
                     position: absolute;
-                    width: 10px;
-                    height: 10px;
-                    border: 1.5px solid #000080;
-                    border-radius: 50%;
+                    width: 12px;
+                    height: 12px;
                     left: 50%;
                     top: 50%;
                     transform: translate(-50%, -50%);
+                    border: 1.5px solid #000080;
+                    border-radius: 50%;
                     animation: chakraSpin 5s linear infinite;
                 }
 
-                .ashoka-chakra::before,
+                .ashoka-chakra::before {
+                    content: "";
+                    position: absolute;
+                    left: 50%;
+                    top: 50%;
+                    width: 1px;
+                    height: 11px;
+                    background: #000080;
+                    transform: translate(-50%, -50%);
+                }
+
                 .ashoka-chakra::after {
                     content: "";
                     position: absolute;
                     left: 50%;
-                    top: -1px;
+                    top: 50%;
                     width: 1px;
-                    height: 10px;
+                    height: 11px;
                     background: #000080;
-                    transform-origin: center;
-                }
-
-                .ashoka-chakra::after {
-                    transform: rotate(90deg);
+                    transform: translate(-50%, -50%)
+                        rotate(90deg);
                 }
 
                 .ashoka-chakra span {
@@ -157,99 +168,58 @@ export default function BookCursor() {
                     left: 50%;
                     top: 50%;
                     width: 1px;
-                    height: 10px;
+                    height: 11px;
                     background: #000080;
                     transform-origin: center;
                 }
 
-                .ashoka-chakra span:nth-child(1) {
-                    transform: translate(-50%, -50%) rotate(15deg);
-                }
-
-                .ashoka-chakra span:nth-child(2) {
-                    transform: translate(-50%, -50%) rotate(30deg);
-                }
-
-                .ashoka-chakra span:nth-child(3) {
-                    transform: translate(-50%, -50%) rotate(45deg);
-                }
-
-                .ashoka-chakra span:nth-child(4) {
-                    transform: translate(-50%, -50%) rotate(60deg);
-                }
-
-                .ashoka-chakra span:nth-child(5) {
-                    transform: translate(-50%, -50%) rotate(75deg);
-                }
-
-                .ashoka-chakra span:nth-child(6) {
-                    transform: translate(-50%, -50%) rotate(105deg);
-                }
-
-                .ashoka-chakra span:nth-child(7) {
-                    transform: translate(-50%, -50%) rotate(120deg);
-                }
-
-                .ashoka-chakra span:nth-child(8) {
-                    transform: translate(-50%, -50%) rotate(135deg);
-                }
-
-                .ashoka-chakra span:nth-child(9) {
-                    transform: translate(-50%, -50%) rotate(150deg);
-                }
-
-                .ashoka-chakra span:nth-child(10) {
-                    transform: translate(-50%, -50%) rotate(165deg);
-                }
-
-                .ashoka-chakra span:nth-child(11) {
-                    transform: translate(-50%, -50%) rotate(180deg);
-                }
-
-                .ashoka-chakra span:nth-child(12) {
-                    transform: translate(-50%, -50%) rotate(195deg);
-                }
-
                 @keyframes flagWave {
                     0% {
-                        transform: perspective(150px)
+                        transform:
+                            perspective(180px)
                             rotateY(0deg)
-                            rotateZ(-5deg);
+                            rotateZ(-4deg);
                     }
 
                     25% {
-                        transform: perspective(150px)
+                        transform:
+                            perspective(180px)
                             rotateY(-12deg)
-                            rotateZ(2deg);
+                            rotateZ(1deg);
                     }
 
                     50% {
-                        transform: perspective(150px)
+                        transform:
+                            perspective(180px)
                             rotateY(0deg)
-                            rotateZ(5deg);
+                            rotateZ(4deg);
                     }
 
                     75% {
-                        transform: perspective(150px)
+                        transform:
+                            perspective(180px)
                             rotateY(12deg)
                             rotateZ(0deg);
                     }
 
                     100% {
-                        transform: perspective(150px)
+                        transform:
+                            perspective(180px)
                             rotateY(0deg)
-                            rotateZ(-5deg);
+                            rotateZ(-4deg);
                     }
                 }
 
                 @keyframes chakraSpin {
                     from {
-                        transform: translate(-50%, -50%)
+                        transform:
+                            translate(-50%, -50%)
                             rotate(0deg);
                     }
 
                     to {
-                        transform: translate(-50%, -50%)
+                        transform:
+                            translate(-50%, -50%)
                             rotate(360deg);
                     }
                 }
