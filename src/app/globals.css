@@ -51,24 +51,21 @@
 
     .bg-primary {
 
-        background: linear-gradient(
-    to right,
+        background: linear-gradient{
     #FF9933 0% 33.33%,    /* Saffron */
     #FFFFFF 33.33% 66.66%, /* White */
     #138808 66.66% 100%    /* Green */
     }
 
     .bg-primary-dark {
-         background: linear-gradient(
-    to right,
+         background: linear-gradient{
     #FF9933 0% 33.33%,    /* Saffron */
     #FFFFFF 33.33% 66.66%, /* White */
     #138808 66.66% 100%    /* Green */
     }
 
     .border-primary {
-         background: linear-gradient(
-    to right,
+         background: linear-gradient{
     #FF9933 0% 33.33%,    /* Saffron */
     #FFFFFF 33.33% 66.66%, /* White */
     #138808 66.66% 100%    /* Green */
