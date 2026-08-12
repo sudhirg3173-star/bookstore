@@ -261,7 +261,7 @@ export default function Header({ subjects }: { subjects: string[] }) {
 
                                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 backdrop-blur-sm shadow-sm">
 
-                                    <AshokaChakra size={24} />
+                                    <AshokaChakra size={30} />
 
                                     <div className="leading-tight">
                                         <div className="text-[12px] font-bold tracking-widest uppercase text-white">
