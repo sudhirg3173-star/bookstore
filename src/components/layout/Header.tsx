@@ -187,7 +187,7 @@ export default function Header({ subjects }: { subjects: string[] }) {
                 🇮🇳 INDEPENDENCE DAY TOP ACCENT
             ====================================================== */}
 
-            <div className="relative h-1 w-full overflow-hidden">
+            <div className="relative h-3 w-full overflow-hidden">
 
                 {/* Saffron - White - Green */}
                 <div
