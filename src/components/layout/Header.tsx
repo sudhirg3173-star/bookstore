@@ -86,6 +86,12 @@ export default function Header({ subjects }: { subjects: string[] }) {
     return (
 
             <header className="sticky top-0 z-50 shadow-md">
+    <div
+        className="h-1.5 w-full"
+        style={{
+            background: "linear-gradient(to right, #FF9933 0%, #FF9933 33.33%, #FFFFFF 33.33%, #FFFFFF 66.66%, #138808 66.66%, #138808 100%)"
+        }}
+    />
             {/* Top bar */}
             {/* <div className="bg-brand text-white py-2 text-center text-xs tracking-wide hidden md:block">
                 USE CODE:{" "}
