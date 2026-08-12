@@ -33,32 +33,8 @@ export default async function RootLayout({
                     <main className="flex-1">{children}</main>
                     {!isAdmin && <Footer subjects={subjects} />}
                 </AuthProvider>
-            
-            
-            <!-- Independence Day Announcement -->
-<div id="kbi-independence-bar">
-
-    <div class="kbi-tricolor-dot kbi-dot1"></div>
-    <div class="kbi-tricolor-dot kbi-dot2"></div>
-    <div class="kbi-tricolor-dot kbi-dot3"></div>
-
-    <div class="kbi-independence-content">
-
-        <div class="kbi-mini-flag">
-            <div class="kbi-flag-saffron"></div>
-            <div class="kbi-flag-white"></div>
-            <div class="kbi-flag-green"></div>
-        </div>
-
-        <div class="kbi-chakra"></div>
-
-        <div class="kbi-independence-text">
-            🇮🇳 <strong>Happy Independence Day!</strong>
-            &nbsp; Celebrating <span>Freedom • Knowledge • Progress</span>
-        </div>
-
-    </div>
-</div>
+             
+           
             
             </body>
         </html>
