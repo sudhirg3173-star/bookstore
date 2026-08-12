@@ -23,17 +23,17 @@ export default function BookCursor() {
 
         const animate = () => {
             currentX.current +=
-                (targetX.current - currentX.current) * 0.15;
+                (targetX.current - currentX.current) * 0.12;
 
             currentY.current +=
-                (targetY.current - currentY.current) * 0.15;
+                (targetY.current - currentY.current) * 0.12;
 
             if (cursorRef.current) {
                 cursorRef.current.style.left =
-                    `${currentX.current + 15}px`;
+                    `${currentX.current + 12}px`;
 
                 cursorRef.current.style.top =
-                    `${currentY.current + 15}px`;
+                    `${currentY.current + 12}px`;
             }
 
             animationFrame =
@@ -61,178 +61,70 @@ export default function BookCursor() {
                 position: "fixed",
                 left: "0px",
                 top: "0px",
+                width: "100px",
+                height: "55px",
                 zIndex: 2147483647,
                 pointerEvents: "none",
-                width: "48px",
-                height: "34px",
+                userSelect: "none",
                 willChange: "left, top",
             }}
         >
-            <div className="india-flag-cursor">
-
-                {/* Saffron */}
-                <div className="flag-saffron" />
-
-                {/* White + Ashoka Chakra */}
-                <div className="flag-white">
-                    <div className="ashoka-chakra">
-                        {Array.from({ length: 24 }).map(
-                            (_, i) => (
-                                <span
-                                    key={i}
-                                    style={{
-                                        transform: `rotate(${i * 15}deg)`,
-                                    }}
-                                />
-                            )
-                        )}
-                    </div>
-                </div>
-
-                {/* Green */}
-                <div className="flag-green" />
-
-            </div>
+            <img
+                src="/images/india-wave-cursor.png"
+                alt=""
+                draggable={false}
+                style={{
+                    width: "100px",
+                    height: "auto",
+                    display: "block",
+                    animation:
+                        "indiaFlagWave 2.2s ease-in-out infinite",
+                    filter:
+                        "drop-shadow(0 3px 5px rgba(0,0,0,0.18))",
+                }}
+            />
 
             <style jsx>{`
-                .india-flag-cursor {
-                    width: 48px;
-                    height: 32px;
-                    position: relative;
-                    overflow: hidden;
-                    border-radius: 2px;
-                    box-shadow:
-                        0 3px 8px rgba(0, 0, 0, 0.28);
-                    transform-origin: left center;
-                    animation: flagWave 1.6s ease-in-out infinite;
-                }
-
-                .flag-saffron,
-                .flag-white,
-                .flag-green {
-                    width: 100%;
-                    height: 33.333%;
-                }
-
-                .flag-saffron {
-                    background: #ff9933;
-                }
-
-                .flag-white {
-                    background: #ffffff;
-                    position: relative;
-                }
-
-                .flag-green {
-                    background: #138808;
-                }
-
-                /* Ashoka Chakra */
-                .ashoka-chakra {
-                    position: absolute;
-                    width: 12px;
-                    height: 12px;
-                    left: 50%;
-                    top: 50%;
-                    transform: translate(-50%, -50%);
-                    border: 1.5px solid #000080;
-                    border-radius: 50%;
-                    animation: chakraSpin 5s linear infinite;
-                }
-
-                .ashoka-chakra::before {
-                    content: "";
-                    position: absolute;
-                    left: 50%;
-                    top: 50%;
-                    width: 1px;
-                    height: 11px;
-                    background: #000080;
-                    transform: translate(-50%, -50%);
-                }
-
-                .ashoka-chakra::after {
-                    content: "";
-                    position: absolute;
-                    left: 50%;
-                    top: 50%;
-                    width: 1px;
-                    height: 11px;
-                    background: #000080;
-                    transform: translate(-50%, -50%)
-                        rotate(90deg);
-                }
-
-                .ashoka-chakra span {
-                    position: absolute;
-                    left: 50%;
-                    top: 50%;
-                    width: 1px;
-                    height: 11px;
-                    background: #000080;
-                    transform-origin: center;
-                }
-
-                @keyframes flagWave {
+                @keyframes indiaFlagWave {
                     0% {
                         transform:
-                            perspective(180px)
-                            rotateY(0deg)
-                            rotateZ(-4deg);
+                            rotate(-3deg)
+                            scale(1);
                     }
 
                     25% {
                         transform:
-                            perspective(180px)
-                            rotateY(-12deg)
-                            rotateZ(1deg);
+                            rotate(2deg)
+                            scale(1.03);
                     }
 
                     50% {
                         transform:
-                            perspective(180px)
-                            rotateY(0deg)
-                            rotateZ(4deg);
+                            rotate(4deg)
+                            scale(1);
                     }
 
                     75% {
                         transform:
-                            perspective(180px)
-                            rotateY(12deg)
-                            rotateZ(0deg);
+                            rotate(-1deg)
+                            scale(1.03);
                     }
 
                     100% {
                         transform:
-                            perspective(180px)
-                            rotateY(0deg)
-                            rotateZ(-4deg);
-                    }
-                }
-
-                @keyframes chakraSpin {
-                    from {
-                        transform:
-                            translate(-50%, -50%)
-                            rotate(0deg);
-                    }
-
-                    to {
-                        transform:
-                            translate(-50%, -50%)
-                            rotate(360deg);
+                            rotate(-3deg)
+                            scale(1);
                     }
                 }
 
                 @media (max-width: 768px) {
-                    .india-flag-cursor {
+                    div {
                         display: none;
                     }
                 }
 
                 @media (prefers-reduced-motion: reduce) {
-                    .india-flag-cursor,
-                    .ashoka-chakra {
+                    img {
                         animation: none;
                     }
                 }
