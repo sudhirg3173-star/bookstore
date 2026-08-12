@@ -50,32 +50,17 @@
     }
 
     .bg-primary {
+background-color: #e04f51;
+}
 
-        background: linear-gradient(
-    to right,
-    #FF9933 0% 33.33%,    /* Saffron */
-    #FFFFFF 33.33% 66.66%, /* White */
-    #138808 66.66% 100%    /* Green */
-)
-    }
-
-    .bg-primary-dark {
-        background: linear-gradient(
-    to right,
-    #FF9933 0% 33.33%,    /* Saffron */
-    #FFFFFF 33.33% 66.66%, /* White */
-    #138808 66.66% 100%    /* Green */
-)
+.bg-primary-dark {
+        background-color: #c0393b;
     }
 
     .border-primary {
-         background: linear-gradient(
-    to right,
-    #FF9933 0% 33.33%,    /* Saffron */
-    #FFFFFF 33.33% 66.66%, /* White */
-    #138808 66.66% 100%    /* Green */
-)
+        border-color: #e04f51;
     }
+}
 
     .line-clamp-2 {
         display: -webkit-box;
