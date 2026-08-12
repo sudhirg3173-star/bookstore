@@ -5,6 +5,7 @@ import Footer from "@/components/layout/Footer";
 import AuthProvider from "@/components/AuthProvider";
 import { getSubjects } from "@/lib/books";
 import { headers } from "next/headers";
+import BookCursor from "@/components/BookCursor";
 
 export const metadata: Metadata = {
     title: "Buy Academic, Engineering, Management & Medical Books Online | Kabdwal Book Store",
@@ -33,6 +34,7 @@ export default async function RootLayout({
                     <main className="flex-1">{children}</main>
                     {!isAdmin && <Footer subjects={subjects} />}
                 </AuthProvider>
+                <BookCursor />
              
            
             
