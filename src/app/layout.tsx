@@ -29,12 +29,13 @@ export default async function RootLayout({
     return (
         <html lang="en" suppressHydrationWarning>
             <body className="min-h-screen flex flex-col bg-white">
+                <BookCursor />
                 <AuthProvider>
                     {!isAdmin && <Header subjects={subjects} />}
                     <main className="flex-1">{children}</main>
                     {!isAdmin && <Footer subjects={subjects} />}
                 </AuthProvider>
-                <BookCursor />
+                
              
            
             

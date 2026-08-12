@@ -1,67 +1,47 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 export default function BookCursor() {
     const cursorRef = useRef<HTMLDivElement>(null);
 
-    const mouse = useRef({ x: 0, y: 0 });
-    const position = useRef({ x: 0, y: 0 });
+    const mouseX = useRef(0);
+    const mouseY = useRef(0);
+
+    const currentX = useRef(0);
+    const currentY = useRef(0);
+
     const animationFrame = useRef<number | null>(null);
 
-    const [visible, setVisible] = useState(false);
-    const [hovering, setHovering] = useState(false);
-
     useEffect(() => {
-        // Don't show custom cursor on touch/mobile devices
-        if (
-            window.matchMedia("(hover: none), (pointer: coarse)").matches
-        ) {
+        // Only activate on desktop devices
+        const isTouchDevice =
+            window.matchMedia("(hover: none), (pointer: coarse)").matches;
+
+        if (isTouchDevice) {
             return;
         }
 
-        const handleMouseMove = (e: MouseEvent) => {
-            mouse.current.x = e.clientX;
-            mouse.current.y = e.clientY;
-
-            setVisible(true);
-        };
-
-        const handleMouseLeave = () => {
-            setVisible(false);
-        };
-
-        const handleMouseOver = (e: MouseEvent) => {
-            const target = e.target as HTMLElement;
-
-            if (
-                target.closest(
-                    "a, button, input, textarea, select, [role='button'], .book-card, .product-card"
-                )
-            ) {
-                setHovering(true);
-            } else {
-                setHovering(false);
-            }
+        const handleMouseMove = (event: MouseEvent) => {
+            mouseX.current = event.clientX;
+            mouseY.current = event.clientY;
         };
 
         const animate = () => {
-            // Smooth following effect
-            position.current.x +=
-                (mouse.current.x - position.current.x) * 0.14;
+            // Smooth movement
+            currentX.current +=
+                (mouseX.current - currentX.current) * 0.15;
 
-            position.current.y +=
-                (mouse.current.y - position.current.y) * 0.14;
+            currentY.current +=
+                (mouseY.current - currentY.current) * 0.15;
 
             if (cursorRef.current) {
                 cursorRef.current.style.transform = `
                     translate3d(
-                        ${position.current.x + 14}px,
-                        ${position.current.y + 14}px,
+                        ${currentX.current + 16}px,
+                        ${currentY.current + 16}px,
                         0
                     )
-                    rotate(${hovering ? "-8deg" : "-4deg"})
-                    scale(${hovering ? 1.25 : 1})
                 `;
             }
 
@@ -70,8 +50,6 @@ export default function BookCursor() {
         };
 
         window.addEventListener("mousemove", handleMouseMove);
-        window.addEventListener("mouseout", handleMouseLeave);
-        window.addEventListener("mouseover", handleMouseOver);
 
         animationFrame.current =
             requestAnimationFrame(animate);
@@ -82,82 +60,31 @@ export default function BookCursor() {
                 handleMouseMove
             );
 
-            window.removeEventListener(
-                "mouseout",
-                handleMouseLeave
-            );
-
-            window.removeEventListener(
-                "mouseover",
-                handleMouseOver
-            );
-
-            if (animationFrame.current) {
+            if (animationFrame.current !== null) {
                 cancelAnimationFrame(
                     animationFrame.current
                 );
             }
         };
-    }, [hovering]);
-
-    if (!visible) {
-        return null;
-    }
+    }, []);
 
     return (
         <div
             ref={cursorRef}
             aria-hidden="true"
-            className="fixed left-0 top-0 z-[99999] pointer-events-none select-none"
+            className="fixed pointer-events-none select-none z-[999999]"
             style={{
-                width: hovering ? "42px" : "34px",
-                height: hovering ? "42px" : "34px",
-                transition:
-                    "width 180ms ease, height 180ms ease, transform 120ms ease-out",
-                transformOrigin: "center center",
+                left: 0,
+                top: 0,
+                width: "38px",
+                height: "38px",
+                fontSize: "30px",
+                lineHeight: 1,
                 willChange: "transform",
+                transition: "transform 0.08s linear",
             }}
         >
-            {/* Book */}
-            <div
-                className="flex items-center justify-center w-full h-full"
-                style={{
-                    filter: hovering
-                        ? "drop-shadow(0 5px 8px rgba(0,0,0,0.25))"
-                        : "drop-shadow(0 3px 5px rgba(0,0,0,0.18))",
-                }}
-            >
-                <div
-    style={{
-        width: hovering ? "32px" : "27px",
-        height: hovering ? "25px" : "21px",
-        display: "flex",
-        transform: "perspective(30px) rotateY(-8deg)",
-    }}
->
-    <div
-        style={{
-            width: "50%",
-            height: "100%",
-            background: "#FFF8E7",
-            border: "1.5px solid #8B5E3C",
-            borderRadius: "3px 1px 1px 3px",
-            boxShadow: "inset -2px 0 rgba(139,94,60,0.15)",
-        }}
-    />
-
-    <div
-        style={{
-            width: "50%",
-            height: "100%",
-            background: "#FFF8E7",
-            border: "1.5px solid #8B5E3C",
-            borderRadius: "1px 3px 3px 1px",
-            boxShadow: "inset 2px 0 rgba(139,94,60,0.15)",
-        }}
-    />
-</div>
-            </div>
+            📖
         </div>
     );
 }
