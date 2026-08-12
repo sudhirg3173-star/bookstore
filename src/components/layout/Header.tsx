@@ -187,7 +187,7 @@ export default function Header({ subjects }: { subjects: string[] }) {
                 🇮🇳 INDEPENDENCE DAY TOP ACCENT
             ====================================================== */}
 
-            <div className="relative h-3 w-full overflow-hidden">
+            <div className="relative h-4 w-full overflow-hidden">
 
                 {/* Saffron - White - Green */}
                 <div
@@ -264,11 +264,11 @@ export default function Header({ subjects }: { subjects: string[] }) {
                                     <AshokaChakra size={24} />
 
                                     <div className="leading-tight">
-                                        <div className="text-[10px] font-bold tracking-widest uppercase text-white">
+                                        <div className="text-[12px] font-bold tracking-widest uppercase text-white">
                                             Independence Day
                                         </div>
 
-                                        <div className="text-[8px] text-white/60 tracking-wide">
+                                        <div className="text-[10px] text-white/60 tracking-wide">
                                             Proudly Indian
                                         </div>
                                     </div>
