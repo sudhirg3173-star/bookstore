@@ -127,17 +127,36 @@ export default function BookCursor() {
                         : "drop-shadow(0 3px 5px rgba(0,0,0,0.18))",
                 }}
             >
-                <span
-                    style={{
-                        fontSize: hovering
-                            ? "32px"
-                            : "27px",
-                        lineHeight: 1,
-                        display: "block",
-                    }}
-                >
-                    📖
-                </span>
+                <div
+    style={{
+        width: hovering ? "32px" : "27px",
+        height: hovering ? "25px" : "21px",
+        display: "flex",
+        transform: "perspective(30px) rotateY(-8deg)",
+    }}
+>
+    <div
+        style={{
+            width: "50%",
+            height: "100%",
+            background: "#FFF8E7",
+            border: "1.5px solid #8B5E3C",
+            borderRadius: "3px 1px 1px 3px",
+            boxShadow: "inset -2px 0 rgba(139,94,60,0.15)",
+        }}
+    />
+
+    <div
+        style={{
+            width: "50%",
+            height: "100%",
+            background: "#FFF8E7",
+            border: "1.5px solid #8B5E3C",
+            borderRadius: "1px 3px 3px 1px",
+            boxShadow: "inset 2px 0 rgba(139,94,60,0.15)",
+        }}
+    />
+</div>
             </div>
         </div>
     );
