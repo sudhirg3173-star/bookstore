@@ -41,7 +41,7 @@ export default function ProductGrid({
     const [filters, setFilters] = useState({
         availability: [] as string[],
         minPrice: 0,
-        maxPrice: 5000,
+        maxPrice: Number.MAX_SAFE_INTEGER,
         publishers: [] as string[],
     });
 
