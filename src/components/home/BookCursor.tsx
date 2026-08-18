@@ -36,12 +36,10 @@ export default function BookCursor() {
                     `${currentY.current + 12}px`;
             }
 
-            animationFrame =
-                requestAnimationFrame(animate);
+            animationFrame = requestAnimationFrame(animate);
         };
 
-        animationFrame =
-            requestAnimationFrame(animate);
+        animationFrame = requestAnimationFrame(animate);
 
         return () => {
             window.removeEventListener(
@@ -61,58 +59,62 @@ export default function BookCursor() {
                 position: "fixed",
                 left: "0px",
                 top: "0px",
-                width: "100px",
-                height: "55px",
+                width: "60px",
+                height: "60px",
                 zIndex: 2147483647,
                 pointerEvents: "none",
                 userSelect: "none",
                 willChange: "left, top",
             }}
         >
-            <img
-                src="/images/india-wave-cursor.png"
-                alt=""
-                draggable={false}
+            <span
                 style={{
-                    width: "100px",
-                    height: "auto",
                     display: "block",
+                    fontSize: "42px",
+                    lineHeight: "1",
                     animation:
-                        "indiaFlagWave 2.2s ease-in-out infinite",
+                        "bookFloat 2.2s ease-in-out infinite",
                     filter:
-                        "drop-shadow(0 3px 5px rgba(0,0,0,0.18))",
+                        "drop-shadow(0 3px 5px rgba(0,0,0,0.22))",
                 }}
-            />
+            >
+                📖
+            </span>
 
             <style jsx>{`
-                @keyframes indiaFlagWave {
+                @keyframes bookFloat {
                     0% {
                         transform:
-                            rotate(-3deg)
+                            rotate(-8deg)
+                            translateY(0)
                             scale(1);
                     }
 
                     25% {
                         transform:
-                            rotate(2deg)
-                            scale(1.03);
+                            rotate(3deg)
+                            translateY(-3px)
+                            scale(1.08);
                     }
 
                     50% {
                         transform:
-                            rotate(4deg)
+                            rotate(8deg)
+                            translateY(-5px)
                             scale(1);
                     }
 
                     75% {
                         transform:
-                            rotate(-1deg)
-                            scale(1.03);
+                            rotate(-3deg)
+                            translateY(-2px)
+                            scale(1.08);
                     }
 
                     100% {
                         transform:
-                            rotate(-3deg)
+                            rotate(-8deg)
+                            translateY(0)
                             scale(1);
                     }
                 }
@@ -124,8 +126,8 @@ export default function BookCursor() {
                 }
 
                 @media (prefers-reduced-motion: reduce) {
-                    img {
-                        animation: none;
+                    span {
+                        animation: none !important;
                     }
                 }
             `}</style>
