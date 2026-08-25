@@ -15,12 +15,12 @@ export default function Footer({ subjects: _subjects }: { subjects: string[] }) 
                         //     icon: "🚚",
                         //     title: "Free Shipping",
                         //     desc: "Orders over ₹999",
-                        // },
-                        {
-                            icon: "↩️",
-                            title: "Easy Returns",
-                            desc: "30-day return policy",
-                        },
+                        //},
+                        //{
+                        //    icon: "↩️",
+                        //    title: "Easy Returns",
+                        //    desc: "30-day return policy",
+                        //},
                         {
                             icon: "🔒",
                             title: "Secure Payments",
