@@ -59,6 +59,7 @@ export default function Footer({ subjects: _subjects }: { subjects: string[] }) 
                         />
                     </Link>
                     <p className="text-sm text-gray-400 leading-relaxed mb-5">
+                        <h3>KABDWAL BOOK INTERNATIONAL</h3>
                         Your one-stop destination for academic, professional, and educational
                         books. Discover knowledge that transforms lives.
                     </p>
