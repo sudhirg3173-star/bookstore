@@ -168,70 +168,7 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
                                         </div>
                                     </div>
 
-                                    {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-1.5 mt-10 flex-wrap">
-                        {/* Prev */}
-                        <button
-                            onClick={() => setPage((p) => Math.max(1, p - 1))}
-                            disabled={page === 1}
-                            className="p-2 border border-gray-200 rounded-lg disabled:opacity-40 hover:border-primary hover:text-primary transition-colors"
-                        >
-                            <ChevronLeft className="w-4 h-4" />
-                        </button>
-
-                        {(() => {
-                            const buttons: React.ReactNode[] = [];
-                            const delta = 2; // pages each side of current
-                            const range: number[] = [];
-
-                            // Always include first, last, and window around current page
-                            for (let i = Math.max(2, page - delta); i <= Math.min(totalPages - 1, page + delta); i++) {
-                                range.push(i);
-                            }
-
-                            const allPages = [1, ...range, totalPages].filter(
-                                (v, i, arr) => arr.indexOf(v) === i && v >= 1 && v <= totalPages
-                            );
-
-                            let prev = 0;
-                            for (const pg of allPages) {
-                                if (prev && pg - prev > 1) {
-                                    buttons.push(
-                                        <span key={`ellipsis-${pg}`} className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm select-none">
-                                            …
-                                        </span>
-                                    );
-                                }
-                                buttons.push(
-                                    <button
-                                        key={pg}
-                                        onClick={() => setPage(pg)}
-                                        className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${pg === page
-                                            ? "bg-primary text-white shadow-sm"
-                                            : "border border-gray-200 text-gray-600 hover:border-primary hover:text-primary"
-                                            }`}
-                                    >
-                                        {pg}
-                                    </button>
-                                );
-                                prev = pg;
-                            }
-                            return buttons;
-                        })()}
-
-                        {/* Next */}
-                        <button
-                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                            disabled={page === totalPages}
-                            className="p-2 border border-gray-200 rounded-lg disabled:opacity-40 hover:border-primary hover:text-primary transition-colors"
-                        >
-                            <ChevronRight className="w-4 h-4" />
-                        </button>
-                    </div>
-                )}
-
-
+                                    
                                     {/* Price + Cart */}
                                     <div className="flex flex-col items-end justify-between flex-shrink-0 gap-2">
                                         <span className="text-base font-extrabold text-gray-900">{formatPrice(s.price, s.currency)}</span>
