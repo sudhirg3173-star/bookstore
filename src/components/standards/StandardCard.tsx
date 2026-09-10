@@ -29,6 +29,7 @@ interface StandardCardProps {
 
 export default function StandardCard({ standard, className }: StandardCardProps) {
     const [addedToCart, setAddedToCart] = useState(false);
+    const [imgError, setImgError] = useState(false);
     const book = standardToBook(standard);
 
     const addToCart = useCartStore((s) => s.addItem);
@@ -62,16 +63,17 @@ export default function StandardCard({ standard, className }: StandardCardProps)
                 href={`/standards/${standard.slug}`}
                 className={cn(
                     "relative flex flex-col items-center justify-center aspect-[3/4] overflow-hidden",
-                    !standard.imageUrl && cn("bg-gradient-to-br p-5 text-white", gradientFor(standard.publisher))
+                    (!standard.imageUrl || imgError) && cn("bg-gradient-to-br p-5 text-white", gradientFor(standard.publisher))
                 )}
             >
-                {standard.imageUrl ? (
+                {standard.imageUrl && !imgError ? (
                     <Image
                         src={standard.imageUrl}
                         alt={standard.name}
                         fill
                         className="object-cover"
                         unoptimized
+                        onError={() => setImgError(true)}
                     />
                 ) : (
                     <>

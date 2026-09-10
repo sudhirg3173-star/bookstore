@@ -3,7 +3,8 @@ export interface Standard {
     name: string;
     year: number;
     publisher: string;
-    price: number;
+    price: number;        // paperback price
+    pdfPrice?: number;    // PDF edition price; undefined/0 falls back to `price`
     currency: string;     // e.g. "INR", "USD"
     description: string;
     imageUrl: string;

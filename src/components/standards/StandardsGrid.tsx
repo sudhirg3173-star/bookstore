@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { Standard } from "@/types/standard";
 import StandardCard from "@/components/standards/StandardCard";
-import { LayoutGrid, List, SlidersHorizontal, X, FileText, ShoppingCart } from "lucide-react";
+import { LayoutGrid, List, SlidersHorizontal, X, FileText, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
 import { standardToBook } from "@/lib/standardUtils";
 import { useCartStore } from "@/store/cartStore";
 import { formatPrice } from "@/store/currencyStore";
@@ -19,6 +19,8 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
     const [selectedPublisher, setSelectedPublisher] = useState<string>("all");
     const [sortBy, setSortBy] = useState<"default" | "price-asc" | "price-desc" | "year-new" | "year-old">("year-new");
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [page, setPage] = useState(1);
+    const [pageSize] = useState(16);
 
     const addToCart = useCartStore((s) => s.addItem);
 
@@ -41,6 +43,19 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
         }
     }, [standards, selectedPublisher, sortBy]);
 
+    const totalPages = Math.ceil(filtered.length / pageSize);
+    const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+    const handlePublisherChange = (pub: string) => {
+        setSelectedPublisher(pub);
+        setPage(1);
+    };
+
+    const handleSortChange = (value: typeof sortBy) => {
+        setSortBy(value);
+        setPage(1);
+    };
+
     const Sidebar = () => (
         <aside className="w-full space-y-6">
             <div>
@@ -49,7 +64,7 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
                     {publishers.map((pub) => (
                         <button
                             key={pub}
-                            onClick={() => setSelectedPublisher(pub)}
+                            onClick={() => handlePublisherChange(pub)}
                             className={cn(
                                 "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-all",
                                 selectedPublisher === pub
@@ -97,13 +112,22 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
                         >
                             <SlidersHorizontal className="w-4 h-4" /> Filter
                         </button>
-                        <span className="text-sm text-gray-500">{filtered.length} standard{filtered.length !== 1 ? "s" : ""}</span>
+                        <span className="text-sm text-gray-500">
+                            {filtered.length === 0 ? (
+                                "0 standards"
+                            ) : (
+                                <>
+                                    Showing <span className="font-semibold text-gray-800">{(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)}</span> of{" "}
+                                    <span className="font-semibold text-gray-800">{filtered.length}</span> standard{filtered.length !== 1 ? "s" : ""}
+                                </>
+                            )}
+                        </span>
                     </div>
 
                     <div className="flex items-center gap-2 ml-auto">
                         <select
                             value={sortBy}
-                            onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                            onChange={(e) => handleSortChange(e.target.value as typeof sortBy)}
                             className="text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-primary"
                         >
                             <option value="default">Default sorting</option>
@@ -135,13 +159,13 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
                     <div className="text-center py-20 text-gray-400">No standards match your filters.</div>
                 ) : view === "grid" ? (
                     <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {filtered.map((s) => (
+                        {paginated.map((s) => (
                             <StandardCard key={s.slug} standard={s} />
                         ))}
                     </div>
                 ) : (
                     <div className="space-y-3">
-                        {filtered.map((s) => {
+                        {paginated.map((s) => {
                             const book = standardToBook(s);
                             return (
                                 <Link
@@ -168,7 +192,7 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
                                         </div>
                                     </div>
 
-                                    
+
                                     {/* Price + Cart */}
                                     <div className="flex flex-col items-end justify-between flex-shrink-0 gap-2">
                                         <span className="text-base font-extrabold text-gray-900">{formatPrice(s.price, s.currency)}</span>
@@ -182,6 +206,69 @@ export default function StandardsGrid({ standards }: StandardsGridProps) {
                                 </Link>
                             );
                         })}
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-1.5 mt-10 flex-wrap">
+                        {/* Prev */}
+                        <button
+                            onClick={() => setPage((p) => Math.max(1, p - 1))}
+                            disabled={page === 1}
+                            className="p-2 border border-gray-200 rounded-lg disabled:opacity-40 hover:border-primary hover:text-primary transition-colors"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+
+                        {(() => {
+                            const buttons: React.ReactNode[] = [];
+                            const delta = 2; // pages each side of current
+                            const range: number[] = [];
+
+                            // Always include first, last, and window around current page
+                            for (let i = Math.max(2, page - delta); i <= Math.min(totalPages - 1, page + delta); i++) {
+                                range.push(i);
+                            }
+
+                            const allPages = [1, ...range, totalPages].filter(
+                                (v, i, arr) => arr.indexOf(v) === i && v >= 1 && v <= totalPages
+                            );
+
+                            let prev = 0;
+                            for (const pg of allPages) {
+                                if (prev && pg - prev > 1) {
+                                    buttons.push(
+                                        <span key={`ellipsis-${pg}`} className="w-9 h-9 flex items-center justify-center text-gray-400 text-sm select-none">
+                                            …
+                                        </span>
+                                    );
+                                }
+                                buttons.push(
+                                    <button
+                                        key={pg}
+                                        onClick={() => setPage(pg)}
+                                        className={`w-9 h-9 rounded-lg text-sm font-medium transition-all ${pg === page
+                                            ? "bg-primary text-white shadow-sm"
+                                            : "border border-gray-200 text-gray-600 hover:border-primary hover:text-primary"
+                                            }`}
+                                    >
+                                        {pg}
+                                    </button>
+                                );
+                                prev = pg;
+                            }
+                            return buttons;
+                        })()}
+
+                        {/* Next */}
+                        <button
+                            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={page === totalPages}
+                            className="p-2 border border-gray-200 rounded-lg disabled:opacity-40 hover:border-primary hover:text-primary transition-colors"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
                     </div>
                 )}
             </div>

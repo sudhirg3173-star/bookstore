@@ -48,7 +48,8 @@ const STANDARD_LABELS: Record<string, string> = {
     YEAR: "Year",
     PUBLISHER: "Publisher",
     Currency: "Currency",
-    Price: "Price",
+    Price: "Price (Paperback)",
+    PDF_Price: "Price (PDF)",
     Discount: "Discount (%)",
     Image_URL: "Image URL",
     Description: "Description",
@@ -57,7 +58,7 @@ const STANDARD_LABELS: Record<string, string> = {
 };
 
 const BOOK_TABLE_COLS = ["Title", "Author", "Subject", "Category", "Currency", "Price", "Publication_Year", "Visible", "Updated_At"];
-const STANDARD_TABLE_COLS = ["Standard Number", "Standard Name", "PUBLISHER", "YEAR", "Currency", "Price", "Visible", "Updated_At"];
+const STANDARD_TABLE_COLS = ["Standard Number", "Standard Name", "PUBLISHER", "YEAR", "Currency", "Price", "PDF_Price", "Visible", "Updated_At"];
 
 // All table columns are sortable
 const SORTABLE_BOOK_COLS = new Set(BOOK_TABLE_COLS);
@@ -285,8 +286,8 @@ function Modal({
         const init: Record<string, string> = {};
         headers.forEach((h) => {
             let val = row?.[h] ?? "";
-            // Strip currency symbols/spaces from Price so <input type="number"> can display it
-            if (h === "Price" && val) {
+            // Strip currency symbols/spaces from Price/PDF_Price so <input type="number"> can display it
+            if ((h === "Price" || h === "PDF_Price") && val) {
                 const numeric = val.replace(/[^0-9.-]/g, "");
                 if (numeric) val = numeric;
             }
@@ -366,7 +367,7 @@ function Modal({
                                         onChange={(v) => setForm((f) => ({ ...f, [h]: v }))}
                                         placeholder={`— select ${labels[h] ?? h} —`}
                                     />
-                                ) : h === "Price" ? (
+                                ) : h === "Price" || h === "PDF_Price" ? (
                                     <input
                                         type="number"
                                         min="0"
@@ -1277,10 +1278,10 @@ export default function ControlCenterClient() {
                                                         <td className="px-4 py-3">
                                                             {order.deliveryStatus ? (
                                                                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${order.deliveryStatus === "Completed" ? "bg-green-100 text-green-700" :
-                                                                        order.deliveryStatus === "Cancelled" || order.deliveryStatus === "Failed" ? "bg-red-100 text-red-600" :
-                                                                            order.deliveryStatus === "Refunded" ? "bg-purple-100 text-purple-700" :
-                                                                                order.deliveryStatus === "On hold" ? "bg-orange-100 text-orange-700" :
-                                                                                    "bg-blue-100 text-blue-700"
+                                                                    order.deliveryStatus === "Cancelled" || order.deliveryStatus === "Failed" ? "bg-red-100 text-red-600" :
+                                                                        order.deliveryStatus === "Refunded" ? "bg-purple-100 text-purple-700" :
+                                                                            order.deliveryStatus === "On hold" ? "bg-orange-100 text-orange-700" :
+                                                                                "bg-blue-100 text-blue-700"
                                                                     }`}>
                                                                     {order.deliveryStatus}
                                                                 </span>
@@ -1463,19 +1464,21 @@ export default function ControlCenterClient() {
 
             {/* Add / Edit Modal */}
             {modalOpen && data && (() => {
-                // Build modal headers with Currency right after Price and Image_URL after Currency
+                // Build modal headers with PDF_Price + Currency right after Price and Image_URL after Currency
                 const ensureDiscount = (hdrs: string[]): string[] => {
                     if (hdrs.includes("Discount")) return hdrs;
                     const idx = hdrs.indexOf("Price");
                     const at = idx >= 0 ? idx + 1 : hdrs.length;
                     return [...hdrs.slice(0, at), "Discount", ...hdrs.slice(at)];
                 };
-                const STANDARDS_FLOAT = ["Currency", "Image_URL"];
+                const hasPdfPrice = data.headers.includes("PDF_Price");
+                const STANDARDS_FLOAT = ["Currency", "Image_URL", "PDF_Price"];
                 const baseHeaders = data.headers.filter((h) => !STANDARDS_FLOAT.includes(h));
                 const priceIdx = baseHeaders.indexOf("Price");
                 const insertAt = priceIdx >= 0 ? priceIdx + 1 : baseHeaders.length;
+                const priceFollowers = [...(hasPdfPrice ? ["PDF_Price"] : []), "Currency", "Image_URL"];
                 const modalHeaders = tab === "standards"
-                    ? ensureDiscount([...baseHeaders.slice(0, insertAt), "Currency", "Image_URL", ...baseHeaders.slice(insertAt)])
+                    ? ensureDiscount([...baseHeaders.slice(0, insertAt), ...priceFollowers, ...baseHeaders.slice(insertAt)])
                     : ensureDiscount(data.headers);
                 return (
                     <Modal

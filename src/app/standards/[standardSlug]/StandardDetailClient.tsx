@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ShoppingCart, Heart, Share2, FileText, Calendar, Building2, Hash, Package } from "lucide-react";
 import { Standard } from "@/types/standard";
-import { standardToBook } from "@/lib/standardUtils";
+import { standardToBook, StandardFormat } from "@/lib/standardUtils";
 import { useCartStore } from "@/store/cartStore";
 import { useWishlistStore } from "@/store/wishlistStore";
 import { formatPrice } from "@/store/currencyStore";
@@ -18,14 +18,17 @@ export default function StandardDetailClient({ standard }: Props) {
     const [addedToCart, setAddedToCart] = useState(false);
     const [imgError, setImgError] = useState(false);
     const [quantity, setQuantity] = useState(1);
-    const book = standardToBook(standard);
+    const [format, setFormat] = useState<StandardFormat>("paperback");
+    const hasPdf = !!standard.pdfPrice && standard.pdfPrice > 0;
+    const book = standardToBook(standard, format);
 
     const addToCart = useCartStore((s) => s.addItem);
     const toggleWishlist = useWishlistStore((s) => s.toggleItem);
     const isWishlisted = useWishlistStore((s) => s.hasItem(book.sku));
 
+    const basePrice = format === "pdf" ? (standard.pdfPrice ?? standard.price) : standard.price;
     const discounted = standard.discount
-        ? standard.price * (1 - standard.discount / 100)
+        ? basePrice * (1 - standard.discount / 100)
         : null;
 
     const handleAddToCart = () => {
@@ -94,26 +97,54 @@ export default function StandardDetailClient({ standard }: Props) {
                                 {standard.description}
                             </p>
 
+                            {/* Format selector */}
+                            {hasPdf && (
+                                <div className="flex items-center gap-2 mb-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormat("paperback")}
+                                        className={`flex-1 sm:flex-none px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${format === "paperback"
+                                            ? "border-primary bg-primary/10 text-primary"
+                                            : "border-gray-200 text-gray-500 hover:border-primary/40"
+                                            }`}
+                                    >
+                                        Paperback
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setFormat("pdf")}
+                                        className={`flex-1 sm:flex-none px-4 py-2 rounded-xl border text-sm font-semibold transition-all ${format === "pdf"
+                                            ? "border-primary bg-primary/10 text-primary"
+                                            : "border-gray-200 text-gray-500 hover:border-primary/40"
+                                            }`}
+                                    >
+                                        PDF
+                                    </button>
+                                </div>
+                            )}
+
                             {/* Price */}
                             <div className="flex items-baseline gap-3 mb-5 pb-5 border-b border-gray-100">
-                            {discounted ? (
-                                <>
+                                {discounted ? (
+                                    <>
+                                        <span className="text-3xl font-extrabold text-primary">
+                                            {formatPrice(discounted, standard.currency)}
+                                        </span>
+                                        <span className="text-lg text-gray-400 line-through">
+                                            {formatPrice(basePrice, standard.currency)}
+                                        </span>
+                                        <span className="text-sm bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">
+                                            Save {standard.discount}%
+                                        </span>
+                                    </>
+                                ) : (
                                     <span className="text-3xl font-extrabold text-primary">
-                                        {formatPrice(discounted, standard.currency)}
+                                        {formatPrice(basePrice, standard.currency)}
                                     </span>
-                                    <span className="text-lg text-gray-400 line-through">
-                                        {formatPrice(standard.price, standard.currency)}
-                                    </span>
-                                    <span className="text-sm bg-green-100 text-green-700 font-semibold px-2 py-0.5 rounded-full">
-                                        Save {standard.discount}%
-                                    </span>
-                                </>
-                            ) : (
-                                <span className="text-3xl font-extrabold text-primary">
-                                    {formatPrice(standard.price, standard.currency)}
+                                )}
+                                <span className="text-xs text-gray-400">
+                                    {format === "pdf" ? "Instant PDF download" : "Official print edition"}
                                 </span>
-                            )}
-				                <span className="text-xs text-gray-400">Official print edition</span>
                             </div>
 
                             {/* Meta grid */}

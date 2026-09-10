@@ -127,6 +127,8 @@ export function getAllStandards(): Standard[] {
             const currencyMatch = rawPrice.match(/^([A-Z]{2,4})\s*/i);
             const currency = currencyFromCol || (currencyMatch ? currencyMatch[1].toUpperCase() : "INR");
             const price = parseFloat(rawPrice.replace(/[^0-9.]/g, "")) || 0;
+            const rawPdfPrice = row["pdf_price"] || "0";
+            const pdfPrice = parseFloat(rawPdfPrice.replace(/[^0-9.]/g, "")) || undefined;
             const number = row["standard_number"] || row["standard_number_"] || Object.values(row)[0] || "";
             const rawDiscount = parseInt(row["discount"] || row["Discount"] || "0", 10);
             const discount = rawDiscount > 0 ? rawDiscount : undefined;
@@ -144,6 +146,7 @@ export function getAllStandards(): Standard[] {
                 year: parseInt(row["year"] || "0", 10),
                 publisher: row["publisher"] || "",
                 price,
+                pdfPrice,
                 currency,
                 description: row["description"] || "",
                 // HTTP URLs: show no image (fallback) while background download runs.
