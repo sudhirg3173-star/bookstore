@@ -143,7 +143,7 @@ export default function StandardDetailClient({ standard }: Props) {
                                     </span>
                                 )}
                                 <span className="text-xs text-gray-400">
-                                    {format === "pdf" ? "Instant PDF download" : "Official print edition"}
+                                    {format === "pdf" ? "Delivery in 24-48 working hours" : "Official print edition"}
                                 </span>
                             </div>
 
