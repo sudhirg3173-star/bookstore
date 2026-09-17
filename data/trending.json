@@ -12,7 +12,7 @@
         "9781394248797"
     ],
     "standard": [
-        "etrto-2026",
+        "BS EN ISO 9001:2026",
         "spcav-1-2026",
         "jatma-year-book-2026",
         "nfpa-70hb26",
@@ -21,6 +21,6 @@
         "iatf-16949-core-tools",
         "cqi-27-2-2018",
         "rules-6-2024",
-        "apqp-3-2024"
+        "etrto-2026"
     ]
 }
