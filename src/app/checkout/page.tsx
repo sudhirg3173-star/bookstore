@@ -19,10 +19,8 @@ import {
     RefreshCw,
     Info,
 } from "lucide-react";
-import { setDoc, doc } from "firebase/firestore";
 import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
-import { getFirebaseFirestore } from "@/lib/firebaseClient";
 import { getBookUrl } from "@/lib/utils";
 import { CreatePaymentRequestResponse } from "@/types/payment";
 import { Order, OrderBillingAddress } from "@/types/order";
@@ -206,19 +204,20 @@ export default function CheckoutPage() {
                     // before React navigates away — prevents removeChild null errors.
                     try { window.Instamojo.close(); } catch { /* ignore */ }
 
-                    // Save full order to Firestore only on successful payment
+                    // Save full order via the server (client SDK lacks write
+                    // permission on the orders collection).
                     const requestId = response.paymentRequestId || pendingOrderDataRef.current?.paymentRequestId;
                     if (requestId && pendingOrderDataRef.current) {
                         try {
-                            const db = getFirebaseFirestore();
-                            await setDoc(
-                                doc(db, "orders", requestId),
-                                {
+                            await fetch("/api/payment/save-order", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
                                     ...pendingOrderDataRef.current,
                                     paymentId: response.paymentId || "",
                                     status: "Credit",
-                                }
-                            );
+                                }),
+                            });
                         } catch (err) {
                             console.error("Failed to save order:", err);
                         }
