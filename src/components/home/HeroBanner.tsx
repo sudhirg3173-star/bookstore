@@ -17,7 +17,7 @@ const slides = [
         accent: "text-amber-400",
         bookEmoji: "",
         image: "/images/banner/banner4.webp",
-    }
+    },
     {
         id: 2,
         badge: "BOOKS",
