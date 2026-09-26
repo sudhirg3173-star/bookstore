@@ -8,6 +8,18 @@ import { ChevronRight } from "lucide-react";
 const slides = [
     {
         id: 1,
+        badge: "BOOK OF THE MONTH",
+        headline: "Bestselling\n Books",
+        subtext: "Discover title of the month",
+        cta: "Order Now",
+        href: "https://www.kabdwalbook.com/rewired-mckinseys-playbook-on-how-leading-companies-win-with-technology-and-ai-2nd-edition/eric-lamarre_kate-smaje_robert-levin_alex-singla_alexander-sukharevsky/9781394381906",
+        gradient: "from-[#001329] via-[#001329] to-[#001329]",
+        accent: "text-amber-400",
+        bookEmoji: "",
+        image: "/images/banner/banner4.webp",
+    }
+    {
+        id: 2,
         badge: "BOOKS",
         headline: "Explore\n Books",
         subtext: "Discover popular\n titles of the month",
@@ -19,7 +31,7 @@ const slides = [
         image: "/images/banner/banner3.webp",
     },
     {
-        id: 2,
+        id: 3,
         badge: "STANDARDS & REFERENCES",
         headline: "Explore\n Standards",
         subtext: "Handpicked by our editorial team",
@@ -29,19 +41,7 @@ const slides = [
         accent: "text-emerald-300",
         bookEmoji: "",
         image: "/images/banner/banner1.webp",
-    },
-    {
-        id: 3,
-        badge: "BOOK OF THE MONTH",
-        headline: "Bestselling\n Books",
-        subtext: "Discover title of the month",
-        cta: "Order Now",
-        href: "https://www.kabdwalbook.com/rewired-mckinseys-playbook-on-how-leading-companies-win-with-technology-and-ai-2nd-edition/eric-lamarre_kate-smaje_robert-levin_alex-singla_alexander-sukharevsky/9781394381906",
-        gradient: "from-[#001329] via-[#001329] to-[#001329]",
-        accent: "text-amber-400",
-        bookEmoji: "",
-        image: "/images/banner/banner4.webp",
-    }
+    }    
 ];
 
 export default function HeroBanner() {
