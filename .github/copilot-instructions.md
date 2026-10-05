@@ -6,9 +6,11 @@
 npm run dev       # Start dev server (http://localhost:3000)
 npm run build     # Production build
 npm run lint      # ESLint via next lint
+npm run test:payments # Credential-free Cashfree route and adapter tests
+npm run dev:payments  # Isolated local Cashfree sandbox (starts at port 3001)
 ```
 
-There is no test suite. No test runner is configured.
+Payment tests use the built-in Node.js test runner in `scripts/test-payments.mjs`.
 
 ## Architecture
 
@@ -35,7 +37,7 @@ Next.js 14 App Router project. All pages are in `src/app/`, all reusable compone
 
 **State** — cart and wishlist use Zustand with the `persist` middleware (localStorage). Store keys: `bookstore-cart` (v1) and `bookstore-wishlist`.
 
-**Payments** — Instamojo gateway via `src/app/api/payment/`. Exchange rates fetched from `open.er-api.com` and cached per server instance for 1 hour (`src/app/api/exchange-rates/route.ts`).
+**Payments** — Cashfree hosted redirect checkout via `src/app/api/payment/` and the official browser SDK. Catalogue-priced pending orders are saved before redirect; verification and signed webhooks fetch Cashfree order status. Only `PAID` maps to the existing `Credit` order status. Never trust browser payment status. `npm run dev:payments` forces sandbox mode and isolates orders in ignored `.local/payments/`; it reads `.env.payments.local` and requires Node.js 22.16+. Exchange rates are cached for 1 hour (`src/app/api/exchange-rates/route.ts`).
 
 ## Key Conventions
 
@@ -56,9 +58,10 @@ Next.js 14 App Router project. All pages are in `src/app/`, all reusable compone
 Required in `.env.local`:
 ```
 NEXT_PUBLIC_APP_URL         # Public site URL
-INSTAMOJO_API_KEY           # Payment gateway key
-INSTAMOJO_AUTH_TOKEN        # Payment gateway token
-INSTAMOJO_API_URL           # https://www.instamojo.com/api/1.1 (or sandbox URL)
+CASHFREE_CLIENT_ID         # Server-only Cashfree App ID
+CASHFREE_CLIENT_SECRET     # Server-only Cashfree secret
+CASHFREE_ENV               # sandbox or production (defaults to sandbox)
+PAYMENT_LOCAL_STORE        # true only for isolated development sandbox; omit in production
 ADMIN_PASSWORD              # Control Center login password
 SESSION_SECRET              # HMAC signing secret for admin_session cookie
 DB_SERVER / DB_USER / DB_PASSWORD / DB_NAME / DB_PORT  # SQL Server (if used)

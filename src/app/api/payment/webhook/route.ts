@@ -1,83 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
-import { InstamojoWebhookPayload } from "@/types/payment";
-import { getFirebaseAdmin } from "@/lib/firebaseAdmin";
-
-/**
- * Verifies the webhook MAC signature from Instamojo.
- * Salt is your Instamojo auth token. Instamojo computes:
- * HMAC-SHA1(salt, "|".join(sorted fields except mac)) and compares to mac field.
- */
-function verifyWebhookMac(payload: InstamojoWebhookPayload, salt: string): boolean {
-    const { mac, ...rest } = payload;
-
-    // Sort fields alphabetically and join with "|"
-    const message = Object.keys(rest)
-        .sort()
-        .map((key) => (rest as Record<string, string>)[key] ?? "")
-        .join("|");
-
-    const expectedMac = crypto
-        .createHmac("sha1", salt)
-        .update(message)
-        .digest("hex");
-
-    return expectedMac === mac;
-}
+import { cashfreeConfig, verifyCashfreeSignature } from "@/lib/cashfree";
+import { confirmPaymentOrder, getPaymentOrder } from "@/lib/paymentOrders";
 
 export async function POST(req: NextRequest) {
     try {
-        const formData = await req.formData();
-        const payload: InstamojoWebhookPayload = {
-            payment_id: formData.get("payment_id") as string,
-            payment_request_id: formData.get("payment_request_id") as string,
-            buyer: formData.get("buyer") as string,
-            buyer_name: formData.get("buyer_name") as string,
-            buyer_phone: formData.get("buyer_phone") as string,
-            currency: formData.get("currency") as string,
-            amount: formData.get("amount") as string,
-            fees: formData.get("fees") as string,
-            purpose: formData.get("purpose") as string,
-            status: formData.get("status") as "Credit" | "Failed",
-            longurl: formData.get("longurl") as string,
-            mac: formData.get("mac") as string,
-            shipped_at: (formData.get("shipped_at") as string) || undefined,
-            created_at: formData.get("created_at") as string,
-        };
-
-        const authToken = process.env.INSTAMOJO_AUTH_TOKEN;
-        if (!authToken) {
-            return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
-        }
-
-        if (!verifyWebhookMac(payload, authToken)) {
-            console.warn("Instamojo webhook: MAC verification failed", payload.payment_id);
+        const rawBody = await req.text();
+        if (!verifyCashfreeSignature(rawBody, req.headers.get("x-webhook-timestamp") || "",
+            req.headers.get("x-webhook-signature") || "", cashfreeConfig().clientSecret)) {
             return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
         }
-
-        if (payload.status === "Credit") {
-            const { db } = getFirebaseAdmin();
-            await db.collection("orders").doc(payload.payment_request_id).set(
-                { paymentId: payload.payment_id, status: "Credit" },
-                { merge: true }
-            );
-            console.log(
-                `Payment successful: id=${payload.payment_id} request=${payload.payment_request_id} amount=${payload.amount}`
-            );
-        } else {
-            const { db } = getFirebaseAdmin();
-            await db.collection("orders").doc(payload.payment_request_id).set(
-                { paymentId: payload.payment_id, status: "Failed" },
-                { merge: true }
-            );
-            console.log(
-                `Payment failed: id=${payload.payment_id} status=${payload.status}`
-            );
+        const payload = JSON.parse(rawBody);
+        if (!["PAYMENT_SUCCESS_WEBHOOK", "PAYMENT_FAILED_WEBHOOK", "PAYMENT_USER_DROPPED_WEBHOOK"].includes(payload.type)) {
+            return NextResponse.json({ received: true });
         }
-
+        const orderId = payload.data?.order?.order_id;
+        if (typeof orderId !== "string" || !/^kb_[a-f0-9]{32}$/.test(orderId)) {
+            return NextResponse.json({ error: "Invalid order ID" }, { status: 400 });
+        }
+        if (!await getPaymentOrder(orderId)) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+        await confirmPaymentOrder(orderId);
         return NextResponse.json({ received: true });
     } catch (error) {
-        console.error("Webhook error:", error);
+        console.error("Cashfree webhook processing failed:", error instanceof Error ? error.message : "Unknown error");
         return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 });
     }
 }

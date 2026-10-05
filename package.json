@@ -4,11 +4,15 @@
     "private": true,
     "scripts": {
         "dev": "next dev",
+        "dev:payments": "node scripts/dev-payments.mjs",
+        "test:payments": "node --test scripts/test-payments.mjs",
+        "test:firestore": "npx --yes firebase-tools@14.22.0 emulators:exec --only firestore --project demo-bookstore-rules \"node --test scripts/test-firestore.mjs\"",
         "build": "next build",
         "start": "next start",
         "lint": "next lint"
     },
     "dependencies": {
+        "@cashfreepayments/cashfree-js": "^1.0.7",
         "clsx": "^2.1.1",
         "firebase": "^12.13.0",
         "firebase-admin": "^13.10.0",
