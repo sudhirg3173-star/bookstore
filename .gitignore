@@ -18,11 +18,15 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.payments.local
 
 # Debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
 
 # Vercel
 .vercel
@@ -47,5 +51,6 @@ Thumbs.db
 # Cache
 .eslintcache
 .turbo
+/.local/
 
 key.json

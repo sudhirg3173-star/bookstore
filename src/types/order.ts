@@ -1,3 +1,5 @@
+import { OrderShipping } from "./shipping";
+
 export interface OrderItem {
     title: string;
     authors: string;
@@ -16,12 +18,14 @@ export interface OrderBilling {
     address: string;
     state: string;
     pincode: string;
+    countryCode?: string;
 }
 
 export interface OrderBillingAddress {
     address: string;
     state: string;
     pincode: string;
+    countryCode?: string;
 }
 
 export type DeliveryStatus = "Processing" | "On hold" | "Completed" | "Cancelled" | "Refunded" | "Failed";
@@ -37,5 +41,6 @@ export interface Order {
     items: OrderItem[];
     billing: OrderBilling;
     billingAddress?: OrderBillingAddress;
+    shipping?: OrderShipping;
     createdAt: string;
 }

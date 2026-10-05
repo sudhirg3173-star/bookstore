@@ -1,0 +1,68 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function ownsDocument(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function optionalText(data, field, maxLength) {
+      return !(field in data) || (data[field] is string && data[field].size() <= maxLength);
+    }
+
+    function validProfile(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && optionalText(data, 'avatar', 2048)
+        && optionalText(data, 'bio', 5000)
+        && optionalText(data, 'storeName', 200)
+        && optionalText(data, 'storeDescription', 5000)
+        && optionalText(data, 'authorBio', 5000);
+    }
+
+    match /users/{uid} {
+      allow get: if ownsDocument(uid);
+      allow list: if false;
+
+      allow create: if ownsDocument(uid)
+        && request.resource.data.keys().hasAll(['id', 'name', 'email', 'role', 'createdAt'])
+        && request.resource.data.keys().hasOnly([
+          'id', 'name', 'email', 'role', 'createdAt',
+          'avatar', 'bio', 'storeName', 'storeDescription', 'authorBio'
+        ])
+        && request.resource.data.id == uid
+        && request.auth.token.email is string
+        && request.resource.data.email == request.auth.token.email.lower()
+        && request.resource.data.role in ['buyer', 'seller', 'author']
+        && request.resource.data.createdAt is string
+        && request.resource.data.createdAt.size() <= 40
+        && validProfile(request.resource.data);
+
+      allow update: if ownsDocument(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name', 'avatar', 'bio', 'storeName', 'storeDescription', 'authorBio'
+        ])
+        && validProfile(request.resource.data);
+
+      allow delete: if false;
+    }
+
+    match /wishlists/{uid} {
+      allow get: if ownsDocument(uid);
+      allow list: if false;
+      allow create, update: if ownsDocument(uid)
+        && request.resource.data.keys().hasOnly(['skus'])
+        && request.resource.data.skus is list
+        && request.resource.data.skus.size() <= 500;
+      allow delete: if ownsDocument(uid);
+    }
+
+    match /orders/{orderId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

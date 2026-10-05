@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
+import { load } from "@cashfreepayments/cashfree-js";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -21,10 +22,16 @@ import {
 } from "lucide-react";
 import { useCartStore } from "@/store/cartStore";
 import { useAuthStore } from "@/store/authStore";
-import { getBookUrl } from "@/lib/utils";
+import { cn, getBookUrl } from "@/lib/utils";
+import { getFirebaseAuth } from "@/lib/firebaseClient";
 import { CreatePaymentRequestResponse } from "@/types/payment";
-import { Order, OrderBillingAddress } from "@/types/order";
 import { formatPrice } from "@/store/currencyStore";
+import { COUNTRY_CODES, isDigitalSku, validPhone, validPostcode } from "@/lib/shippingRules";
+import { ShippingQuote } from "@/types/shipping";
+
+const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
+const COUNTRIES = COUNTRY_CODES.map((code) => ({ code, name: countryNames.of(code) || code }))
+    .sort((first, second) => first.name.localeCompare(second.name));
 
 /** Convert a price in `fromCurrency` to INR using the rates map (base = INR). */
 function toINR(price: number, fromCurrency: string, rates: Record<string, number>): number {
@@ -33,25 +40,6 @@ function toINR(price: number, fromCurrency: string, rates: Record<string, number
     const rate = rates[code];
     if (!rate) return price; // unknown currency — keep as-is
     return price / rate;
-}
-
-// Extend window with Instamojo global
-declare global {
-    interface Window {
-        Instamojo: {
-            open: (url: string) => void;
-            close: () => void;
-            configure: (options: {
-                handlers?: {
-                    onOpen?: () => void;
-                    onClose?: () => void;
-                    onSuccess?: (response: Record<string, string>) => void;
-                    onFailure?: (response: Record<string, string>) => void;
-                };
-                directPaymentMode?: string;
-            }) => void;
-        };
-    }
 }
 
 const INDIAN_STATES = [
@@ -71,51 +59,66 @@ interface BillingForm {
     address: string;
     state: string;
     pincode: string;
+    countryCode: string;
 }
 
 interface BillingAddressForm {
     address: string;
     state: string;
     pincode: string;
+    countryCode: string;
 }
 
 export default function CheckoutPage() {
     const router = useRouter();
-    const { items, clearCart } = useCartStore();
+    const { items } = useCartStore();
     const { user } = useAuthStore();
-    const [scriptLoaded, setScriptLoaded] = useState(false);
-
-    // Load Instamojo script manually via useEffect so React never tries to
-    // hoist/unmount it as a <Script> component — avoids removeChild null crash.
-    useEffect(() => {
-        if (document.getElementById("instamojo-checkout-js")) {
-            // Already injected (e.g. HMR re-mount)
-            if (window.Instamojo) setScriptLoaded(true);
-            return;
-        }
-        const script = document.createElement("script");
-        script.id = "instamojo-checkout-js";
-        script.src = "https://js.instamojo.com/v1/checkout.js";
-        script.async = true;
-        script.onload = () => {
-            setScriptLoaded(true);
-            if (paymentUrlRef.current && window.Instamojo) {
-                configurInstamojo(paymentUrlRef.current);
-            }
-        };
-        document.body.appendChild(script);
-        // Do NOT remove the script on unmount — removing it while the modal
-        // is alive would crash the Instamojo SDK.
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [form, setForm] = useState<BillingForm>({ name: "", email: "", phone: "", address: "", state: "", pincode: "" });
+    const [form, setForm] = useState<BillingForm>({ name: "", email: "", phone: "", address: "", state: "", pincode: "", countryCode: "IN" });
     const [fieldErrors, setFieldErrors] = useState<Partial<BillingForm>>({});
     const [billingSameAsDelivery, setBillingSameAsDelivery] = useState(true);
-    const [billingAddressForm, setBillingAddressForm] = useState<BillingAddressForm>({ address: "", state: "", pincode: "" });
+    const [billingAddressForm, setBillingAddressForm] = useState<BillingAddressForm>({ address: "", state: "", pincode: "", countryCode: "IN" });
     const [billingAddressErrors, setBillingAddressErrors] = useState<Partial<BillingAddressForm>>({});
-    const paymentUrlRef = useRef<string | null>(null);
-    const pendingOrderDataRef = useRef<Omit<Order, "id"> | null>(null);
+    const [quoteResult, setQuoteResult] = useState<{ key: string; quote: ShippingQuote } | null>(null);
+    const [shippingError, setShippingError] = useState<{ key: string; message: string } | null>(null);
+    const [selectedServiceTitle, setSelectedServiceTitle] = useState("");
+    const [quoteAttempt, setQuoteAttempt] = useState(0);
+    const needsShipping = form.countryCode !== "IN" && items.some((item) => !isDigitalSku(item.book.sku));
+    const quoteKey = JSON.stringify({
+        items: items.map((item) => ({ sku: item.book.sku, quantity: item.quantity })),
+        countryCode: form.countryCode, postcode: form.pincode.trim(),
+    });
+    const quote = quoteResult?.key === quoteKey ? quoteResult.quote : null;
+    const selectedService = needsShipping ? quote?.services.find((service) => service.title === selectedServiceTitle) : undefined;
+    const currentShippingError = shippingError?.key === quoteKey ? shippingError.message : null;
+
+    useEffect(() => {
+        setQuoteResult(null);
+        setShippingError(null);
+        setSelectedServiceTitle("");
+        if (!needsShipping) return;
+        const destination = JSON.parse(quoteKey);
+        if (!validPostcode(destination.postcode, destination.countryCode)) return;
+        const controller = new AbortController();
+        const timer = setTimeout(async () => {
+            setShippingError(null);
+            try {
+                const response = await fetch("/api/shipping/quote", {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: quoteKey, signal: controller.signal,
+                });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || "Unable to fetch shipping rates");
+                if (controller.signal.aborted) return;
+                setQuoteResult({ key: quoteKey, quote: data });
+                setSelectedServiceTitle(data.services[0]?.title || "");
+            } catch (error) {
+                if (!controller.signal.aborted) setShippingError({ key: quoteKey, message: error instanceof Error ? error.message : "Unable to fetch shipping rates" });
+            }
+        }, 600);
+        return () => { clearTimeout(timer); controller.abort(); };
+    }, [needsShipping, quoteKey, quoteAttempt]);
 
     // Live exchange rates (base = INR)
     const [rates, setRates] = useState<Record<string, number>>({ INR: 1 });
@@ -140,7 +143,7 @@ export default function CheckoutPage() {
             : item.book.price;
         return sum + toINR(unitPrice * item.quantity, item.book.currency, rates);
     }, 0);
-    const shippingINR = subtotalINR > 999 ? 0 : 0;
+    const shippingINR = selectedService?.amount ?? 0;
     const grandTotalINR = Math.round((subtotalINR + shippingINR) * 100) / 100;
 
     // Currencies in the cart that need conversion
@@ -165,15 +168,15 @@ export default function CheckoutPage() {
         }
         if (!form.phone.trim()) {
             errors.phone = "Mobile number is required";
-        } else if (!/^[6-9]\d{9}$/.test(form.phone)) {
-            errors.phone = "Enter a valid 10-digit mobile number";
+        } else if (!validPhone(form.phone, form.countryCode)) {
+            errors.phone = form.countryCode === "IN" ? "Enter a valid 10-digit mobile number" : "Enter a valid phone number including country code";
         }
         if (!form.address.trim()) errors.address = "Delivery address is required";
         if (!form.state) errors.state = "State is required";
         if (!form.pincode.trim()) {
             errors.pincode = "Pincode is required";
-        } else if (!/^\d{6}$/.test(form.pincode)) {
-            errors.pincode = "Enter a valid 6-digit pincode";
+        } else if (!validPostcode(form.pincode.trim(), form.countryCode)) {
+            errors.pincode = form.countryCode === "IN" ? "Enter a valid 6-digit pincode" : "Enter a valid postal code";
         }
         setFieldErrors(errors);
 
@@ -183,8 +186,8 @@ export default function CheckoutPage() {
             if (!billingAddressForm.state) baErrors.state = "State is required";
             if (!billingAddressForm.pincode.trim()) {
                 baErrors.pincode = "Pincode is required";
-            } else if (!/^\d{6}$/.test(billingAddressForm.pincode)) {
-                baErrors.pincode = "Enter a valid 6-digit pincode";
+            } else if (!validPostcode(billingAddressForm.pincode.trim(), billingAddressForm.countryCode)) {
+                baErrors.pincode = billingAddressForm.countryCode === "IN" ? "Enter a valid 6-digit pincode" : "Enter a valid postal code";
             }
         }
         setBillingAddressErrors(baErrors);
@@ -192,65 +195,12 @@ export default function CheckoutPage() {
         return Object.keys(errors).length === 0 && Object.keys(baErrors).length === 0;
     }
 
-    function configurInstamojo(paymentUrl: string) {
-        window.Instamojo.configure({
-            handlers: {
-                onOpen: () => { /* modal opened */ },
-                onClose: () => {
-                    setIsProcessing(false);
-                },
-                onSuccess: async (response) => {
-                    // Close the modal first to let Instamojo clean up its DOM nodes
-                    // before React navigates away — prevents removeChild null errors.
-                    try { window.Instamojo.close(); } catch { /* ignore */ }
-
-                    // Save full order via the server (client SDK lacks write
-                    // permission on the orders collection).
-                    const requestId = response.paymentRequestId || pendingOrderDataRef.current?.paymentRequestId;
-                    if (requestId && pendingOrderDataRef.current) {
-                        try {
-                            await fetch("/api/payment/save-order", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                    ...pendingOrderDataRef.current,
-                                    paymentId: response.paymentId || "",
-                                    status: "Credit",
-                                }),
-                            });
-                        } catch (err) {
-                            console.error("Failed to save order:", err);
-                        }
-                    }
-                    clearCart();
-                    const params = new URLSearchParams({
-                        payment_id: response.paymentId || "",
-                        payment_request_id: response.paymentRequestId || "",
-                        status: response.paymentStatus || "Credit",
-                    });
-                    // Defer navigation one tick so the modal overlay is fully
-                    // removed from the DOM before React mounts the next page.
-                    setTimeout(() => router.push(`/payment/success?${params.toString()}`), 100);
-                },
-                onFailure: (response) => {
-                    try { window.Instamojo.close(); } catch { /* ignore */ }
-                    setIsProcessing(false);
-                    const params = new URLSearchParams({
-                        payment_id: response.paymentId || "",
-                        status: response.paymentStatus || "Failed",
-                    });
-                    setTimeout(() => router.push(`/payment/failure?${params.toString()}`), 100);
-                },
-            },
-        });
-        window.Instamojo.open(paymentUrl);
-        // Reset the loading state immediately after calling open — do not wait
-        // for onOpen, which may never fire if the browser blocks the overlay.
-        setIsProcessing(false);
-    }
-
     async function handlePayNow() {
         if (!validate()) return;
+        if (needsShipping && !selectedService) {
+            setError("Select an available shipping service before paying.");
+            return;
+        }
         setError(null);
         setIsProcessing(true);
 
@@ -260,9 +210,10 @@ export default function CheckoutPage() {
                 : `Order: ${items.length} books from Kabdwalbook`;
 
         try {
+            const token = user ? await getFirebaseAuth().currentUser?.getIdToken() : undefined;
             const res = await fetch("/api/payment/create-request", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
                 body: JSON.stringify({
                     amount: grandTotalINR,
                     purpose,
@@ -270,6 +221,17 @@ export default function CheckoutPage() {
                     email: form.email.trim(),
                     phone: form.phone.trim(),
                     items,
+                    ...(selectedService ? { shippingService: selectedService.title } : {}),
+                    billing: {
+                        name: form.name.trim(), email: form.email.trim(), phone: form.phone.trim(),
+                        address: form.address.trim(), state: form.state, pincode: form.pincode.trim(), countryCode: form.countryCode,
+                    },
+                    ...(!billingSameAsDelivery ? {
+                        billingAddress: {
+                            address: billingAddressForm.address.trim(), state: billingAddressForm.state,
+                            pincode: billingAddressForm.pincode.trim(), countryCode: billingAddressForm.countryCode,
+                        }
+                    } : {}),
                 }),
             });
 
@@ -278,54 +240,20 @@ export default function CheckoutPage() {
 
             if (!res.ok || data.error) {
                 setError(data.error || "Failed to initiate payment. Please try again.");
+                if (res.status === 409 && needsShipping) {
+                    setQuoteResult(null);
+                    setQuoteAttempt((attempt) => attempt + 1);
+                }
                 setIsProcessing(false);
                 return;
             }
 
-            paymentUrlRef.current = data.paymentUrl;
-
-            // Store full order data in a ref — it will be written to Firestore
-            // only after payment succeeds (inside the onSuccess handler).
-            pendingOrderDataRef.current = {
-                userId: user?.id ?? null,
-                paymentRequestId: data.requestId,
-                paymentId: "",
-                status: "Pending",
-                amount: grandTotalINR,
-                items: items.map((item) => ({
-                    title: item.book.title,
-                    authors: item.book.authors,
-                    sku: item.book.sku,
-                    quantity: item.quantity,
-                    price: item.book.price,
-                    currency: item.book.currency,
-                    ...(item.book.discount ? { discount: item.book.discount } : {}),
-                    imageUrl: item.book.imageUrl,
-                })),
-                billing: {
-                    name: form.name.trim(),
-                    email: form.email.trim(),
-                    phone: form.phone.trim(),
-                    address: form.address.trim(),
-                    state: form.state,
-                    pincode: form.pincode.trim(),
-                },
-                ...(!billingSameAsDelivery ? {
-                    billingAddress: {
-                        address: billingAddressForm.address.trim(),
-                        state: billingAddressForm.state,
-                        pincode: billingAddressForm.pincode.trim(),
-                    } satisfies OrderBillingAddress,
-                } : {}),
-                createdAt: new Date().toISOString(),
-            };
-
-            if (scriptLoaded && window.Instamojo) {
-                configurInstamojo(data.paymentUrl);
-            } else {
-                // Script not ready yet — it will call configurInstamojo once loaded
-                setIsProcessing(true);
-            }
+            const cashfree = await load({ mode: data.mode });
+            if (!cashfree) throw new Error("Unable to load payment checkout");
+            sessionStorage.setItem("cashfree-pending-order", data.orderId);
+            const result = await cashfree.checkout({ paymentSessionId: data.paymentSessionId, redirectTarget: "_self" });
+            if (result?.error) throw new Error(result.error.message || "Unable to open payment checkout");
+            setIsProcessing(false);
         } catch {
             setError("Network error. Please check your connection and try again.");
             setIsProcessing(false);
@@ -362,6 +290,17 @@ export default function CheckoutPage() {
                                 </h2>
 
                                 <div className="space-y-4">
+                                    <div>
+                                        <label htmlFor="delivery-country" className="block text-sm font-medium text-gray-700 mb-1">Delivery Country</label>
+                                        <select id="delivery-country" value={form.countryCode} disabled={isProcessing}
+                                            onChange={(event) => {
+                                                setForm({ ...form, countryCode: event.target.value, state: "", pincode: "" });
+                                                setFieldErrors({});
+                                            }}
+                                            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white">
+                                            {COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}
+                                        </select>
+                                    </div>
                                     {/* Full Name */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -415,19 +354,20 @@ export default function CheckoutPage() {
                                         </label>
                                         <div className="relative">
                                             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                            <div className="absolute left-10 top-1/2 -translate-y-1/2 text-sm text-gray-400 border-r border-gray-200 pr-2">
+                                            {form.countryCode === "IN" && <div className="absolute left-10 top-1/2 -translate-y-1/2 text-sm text-gray-400 border-r border-gray-200 pr-2">
                                                 +91
-                                            </div>
+                                            </div>}
                                             <input
                                                 type="tel"
                                                 value={form.phone}
                                                 onChange={(e) => {
-                                                    const val = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                                    const val = form.countryCode === "IN" ? e.target.value.replace(/\D/g, "").slice(0, 10)
+                                                        : e.target.value.replace(/[^\d+]/g, "").slice(0, 16);
                                                     setForm({ ...form, phone: val });
                                                     setFieldErrors({ ...fieldErrors, phone: undefined });
                                                 }}
-                                                placeholder="10-digit mobile number"
-                                                className={`w-full pl-20 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors ${fieldErrors.phone ? "border-red-400" : "border-gray-200"}`}
+                                                placeholder={form.countryCode === "IN" ? "10-digit mobile number" : "+447911123456"}
+                                                className={cn("w-full pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors", form.countryCode === "IN" ? "pl-20" : "pl-10", fieldErrors.phone ? "border-red-400" : "border-gray-200")}
                                             />
                                         </div>
                                         {fieldErrors.phone && (
@@ -465,19 +405,21 @@ export default function CheckoutPage() {
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
                                                 State <span className="text-red-500">*</span>
                                             </label>
-                                            <select
-                                                value={form.state}
-                                                onChange={(e) => {
-                                                    setForm({ ...form, state: e.target.value });
-                                                    setFieldErrors({ ...fieldErrors, state: undefined });
-                                                }}
-                                                className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors bg-white ${fieldErrors.state ? "border-red-400" : "border-gray-200"}`}
-                                            >
+                                            {form.countryCode !== "IN" ? <input aria-label="Delivery state or region" value={form.state}
+                                                onChange={(event) => setForm({ ...form, state: event.target.value })}
+                                                placeholder="State / Region" className={cn("w-full px-3 py-2.5 border rounded-lg text-sm", fieldErrors.state ? "border-red-400" : "border-gray-200")} /> : <select
+                                                    value={form.state}
+                                                    onChange={(e) => {
+                                                        setForm({ ...form, state: e.target.value });
+                                                        setFieldErrors({ ...fieldErrors, state: undefined });
+                                                    }}
+                                                    className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors bg-white ${fieldErrors.state ? "border-red-400" : "border-gray-200"}`}
+                                                >
                                                 <option value="">Select state</option>
                                                 {INDIAN_STATES.map((s) => (
                                                     <option key={s} value={s}>{s}</option>
                                                 ))}
-                                            </select>
+                                            </select>}
                                             {fieldErrors.state && (
                                                 <p className="text-xs text-red-500 mt-1">{fieldErrors.state}</p>
                                             )}
@@ -486,7 +428,7 @@ export default function CheckoutPage() {
                                         {/* Pincode */}
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                Pincode <span className="text-red-500">*</span>
+                                                Postal Code <span className="text-red-500">*</span>
                                             </label>
                                             <div className="relative">
                                                 <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -494,11 +436,11 @@ export default function CheckoutPage() {
                                                     type="text"
                                                     value={form.pincode}
                                                     onChange={(e) => {
-                                                        const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                                                        const val = form.countryCode === "IN" ? e.target.value.replace(/\D/g, "").slice(0, 6) : e.target.value.slice(0, 20);
                                                         setForm({ ...form, pincode: val });
                                                         setFieldErrors({ ...fieldErrors, pincode: undefined });
                                                     }}
-                                                    placeholder="6-digit pincode"
+                                                    placeholder={form.countryCode === "IN" ? "6-digit pincode" : "Postal code"}
                                                     className={`w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors ${fieldErrors.pincode ? "border-red-400" : "border-gray-200"}`}
                                                 />
                                             </div>
@@ -533,6 +475,16 @@ export default function CheckoutPage() {
                                             <p className="text-xs text-gray-400 italic">Billing address will match the delivery address above.</p>
                                         ) : (
                                             <div className="space-y-3">
+                                                <div>
+                                                    <label htmlFor="billing-country" className="block text-sm font-medium text-gray-700 mb-1">Billing Country</label>
+                                                    <select id="billing-country" value={billingAddressForm.countryCode}
+                                                        onChange={(event) => {
+                                                            setBillingAddressForm({ ...billingAddressForm, countryCode: event.target.value, state: "", pincode: "" });
+                                                            setBillingAddressErrors({});
+                                                        }} className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-white">
+                                                        {COUNTRIES.map((country) => <option key={country.code} value={country.code}>{country.name}</option>)}
+                                                    </select>
+                                                </div>
                                                 {/* Billing Address textarea */}
                                                 <div>
                                                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -562,26 +514,28 @@ export default function CheckoutPage() {
                                                         <label className="block text-sm font-medium text-gray-700 mb-1">
                                                             State <span className="text-red-500">*</span>
                                                         </label>
-                                                        <select
-                                                            value={billingAddressForm.state}
-                                                            onChange={(e) => {
-                                                                setBillingAddressForm({ ...billingAddressForm, state: e.target.value });
-                                                                setBillingAddressErrors({ ...billingAddressErrors, state: undefined });
-                                                            }}
-                                                            className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors bg-white ${billingAddressErrors.state ? "border-red-400" : "border-gray-200"}`}
-                                                        >
+                                                        {billingAddressForm.countryCode !== "IN" ? <input aria-label="Billing state or region" value={billingAddressForm.state}
+                                                            onChange={(event) => setBillingAddressForm({ ...billingAddressForm, state: event.target.value })}
+                                                            placeholder="State / Region" className={cn("w-full px-3 py-2.5 border rounded-lg text-sm", billingAddressErrors.state ? "border-red-400" : "border-gray-200")} /> : <select
+                                                                value={billingAddressForm.state}
+                                                                onChange={(e) => {
+                                                                    setBillingAddressForm({ ...billingAddressForm, state: e.target.value });
+                                                                    setBillingAddressErrors({ ...billingAddressErrors, state: undefined });
+                                                                }}
+                                                                className={`w-full px-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors bg-white ${billingAddressErrors.state ? "border-red-400" : "border-gray-200"}`}
+                                                            >
                                                             <option value="">Select state</option>
                                                             {INDIAN_STATES.map((s) => (
                                                                 <option key={s} value={s}>{s}</option>
                                                             ))}
-                                                        </select>
+                                                        </select>}
                                                         {billingAddressErrors.state && (
                                                             <p className="text-xs text-red-500 mt-1">{billingAddressErrors.state}</p>
                                                         )}
                                                     </div>
                                                     <div>
                                                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                                                            Pincode <span className="text-red-500">*</span>
+                                                            Postal Code <span className="text-red-500">*</span>
                                                         </label>
                                                         <div className="relative">
                                                             <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -589,11 +543,11 @@ export default function CheckoutPage() {
                                                                 type="text"
                                                                 value={billingAddressForm.pincode}
                                                                 onChange={(e) => {
-                                                                    const val = e.target.value.replace(/\D/g, "").slice(0, 6);
+                                                                    const val = billingAddressForm.countryCode === "IN" ? e.target.value.replace(/\D/g, "").slice(0, 6) : e.target.value.slice(0, 20);
                                                                     setBillingAddressForm({ ...billingAddressForm, pincode: val });
                                                                     setBillingAddressErrors({ ...billingAddressErrors, pincode: undefined });
                                                                 }}
-                                                                placeholder="6-digit pincode"
+                                                                placeholder={billingAddressForm.countryCode === "IN" ? "6-digit pincode" : "Postal code"}
                                                                 className={`w-full pl-10 pr-4 py-2.5 border rounded-lg text-sm focus:outline-none focus:border-primary transition-colors ${billingAddressErrors.pincode ? "border-red-400" : "border-gray-200"}`}
                                                             />
                                                         </div>
@@ -616,7 +570,7 @@ export default function CheckoutPage() {
                                 </h2>
                                 <p className="text-sm text-gray-500">
                                     Payments are processed securely via{" "}
-                                    <span className="font-semibold text-gray-700">Instamojo</span>.
+                                    <span className="font-semibold text-gray-700">Cashfree</span>.
                                     You can pay using UPI, Net Banking, Debit/Credit Cards, or
                                     Wallets.
                                 </p>
@@ -733,6 +687,34 @@ export default function CheckoutPage() {
                                     })}
                                 </div>
 
+                                {needsShipping && <fieldset className="border-t border-gray-100 pt-4 mb-4 min-w-0">
+                                    <legend className="text-sm font-semibold text-gray-800">Shipping Service</legend>
+                                    {!validPostcode(form.pincode.trim(), form.countryCode) ? <p className="text-xs text-gray-500 mt-2">Enter a valid destination postal code.</p>
+                                        : currentShippingError ? <p role="alert" className="text-xs text-red-600 mt-2">{currentShippingError}</p>
+                                            : !quote ? <p role="status" className="flex items-center gap-2 text-xs text-gray-500 mt-2"><Loader2 className="w-4 h-4 animate-spin" />Fetching shipping rates...</p>
+                                                : <div className="divide-y divide-gray-100">
+                                                    <p className="flex flex-wrap justify-between gap-x-3 gap-y-1 py-2 text-xs text-gray-500">
+                                                        <span>Parcel weight</span>
+                                                        <span className="font-medium text-gray-700">{quote.packageWeightKg.toLocaleString("en-IN", { maximumFractionDigits: 3 })} kg</span>
+                                                    </p>
+                                                    {quote.services.map((service) => <label key={service.title} className="flex gap-2 py-3 items-start cursor-pointer">
+                                                        <input type="radio" name="shipping-service" checked={selectedServiceTitle === service.title} disabled={isProcessing}
+                                                            onChange={() => setSelectedServiceTitle(service.title)} className="mt-1 accent-primary" />
+                                                        <span className="flex-1 min-w-0 text-xs text-gray-700 break-words">
+                                                            <span className="font-semibold">{service.title}</span>
+                                                            {service.transitTime && <span className="block text-gray-500 mt-1">{service.transitTime}</span>}
+                                                            {service.notes && <span className="block text-gray-500 mt-1">{service.notes}</span>}
+                                                            <span className="block font-semibold text-primary mt-1">{formatPrice(service.amount, "INR")}</span>
+                                                        </span>
+                                                    </label>)}
+                                                </div>}
+                                    <button type="button" disabled={isProcessing || !validPostcode(form.pincode.trim(), form.countryCode)}
+                                        onClick={() => { setQuoteResult(null); setShippingError(null); setQuoteAttempt((attempt) => attempt + 1); }}
+                                        className="mt-2 inline-flex items-center gap-1 text-xs text-primary disabled:opacity-50">
+                                        <RefreshCw className="w-3 h-3" />Refresh Rates
+                                    </button>
+                                </fieldset>}
+
                                 {/* Totals — all in INR */}
                                 <div className="border-t border-gray-100 pt-4 space-y-2 text-sm">
                                     <div className="flex justify-between text-gray-600">
@@ -741,13 +723,13 @@ export default function CheckoutPage() {
                                     </div>
                                     <div className="flex justify-between text-gray-600">
                                         <span>Shipping</span>
-                                        <span className={shippingINR === 0 ? "text-green-600 font-medium" : ""}>
-                                            {shippingINR === 0 ? "Free" : formatPrice(shippingINR, "INR")}
+                                        <span className={cn(!needsShipping && "text-green-600 font-medium")}>
+                                            {needsShipping && !selectedService ? "Pending" : shippingINR === 0 ? "Free" : formatPrice(shippingINR, "INR")}
                                         </span>
                                     </div>
                                     <div className="flex justify-between font-bold text-gray-900 text-base pt-2 border-t border-gray-100">
                                         <span>Total (INR)</span>
-                                        <span className="text-primary">{formatPrice(grandTotalINR, "INR")}</span>
+                                        <span className="text-primary">{needsShipping && !selectedService ? "Pending" : formatPrice(grandTotalINR, "INR")}</span>
                                     </div>
                                 </div>
 
@@ -762,7 +744,7 @@ export default function CheckoutPage() {
                                 {/* Pay button */}
                                 <button
                                     onClick={handlePayNow}
-                                    disabled={isProcessing || ratesLoading}
+                                    disabled={isProcessing || ratesLoading || (needsShipping && !selectedService)}
                                     className="mt-5 w-full bg-primary hover:bg-primary-dark disabled:opacity-60 disabled:cursor-not-allowed text-white py-3.5 rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2"
                                 >
                                     {isProcessing ? (
@@ -773,13 +755,13 @@ export default function CheckoutPage() {
                                     ) : (
                                         <>
                                             <Lock className="w-4 h-4" />
-                                            Pay {formatPrice(grandTotalINR, "INR")} with Instamojo
+                                            {needsShipping && !selectedService ? "Shipping Required" : `Pay ${formatPrice(grandTotalINR, "INR")} with Cashfree`}
                                         </>
                                     )}
                                 </button>
 
                                 <p className="text-xs text-gray-400 text-center mt-3">
-                                    🔒 Secure, encrypted payment via Instamojo
+                                    🔒 Secure, encrypted payment via Cashfree
                                 </p>
                             </div>
                         </div>
