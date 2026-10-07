@@ -1,5 +1,7 @@
 import { ShippingQuote } from "@/types/shipping";
 import { isDigitalSku, validCountry, validPostcode } from "@/lib/shippingRules";
+import { getBookBySku } from "@/lib/books";
+import { getStandardBySlug } from "@/lib/standards";
 
 export class ShippingError extends Error {
     constructor(message: string, public status = 502) {
@@ -19,20 +21,30 @@ export async function getShippingQuote(
     if (countryCode === "IN" || physicalItems.length === 0) {
         return { currency: "INR", packageWeightKg: 0, services: [] };
     }
-    let weights: number | Record<string, unknown>;
-    try {
-        weights = JSON.parse(process.env.SHIPGLOBAL_WEIGHTS_KG || "{}");
-        if (typeof weights === "number") {
-            if (!Number.isFinite(weights) || weights <= 0) throw new Error();
-        } else if (!weights || Array.isArray(weights) || typeof weights !== "object") {
-            throw new Error();
-        }
-    } catch {
-        throw new ShippingError("International shipping weights are not configured", 503);
-    }
+    let weights: number | Record<string, unknown> | undefined;
     let packageWeightKg = 0;
     for (const item of physicalItems) {
-        const weight = typeof weights === "number" ? weights : weights[item.sku];
+        const product = item.sku.startsWith("std-")
+            ? getStandardBySlug(item.sku.slice(4)) : getBookBySku(item.sku);
+        const grams = product?.weightsInGram;
+        let weight: unknown;
+        if (grams !== undefined && Number.isSafeInteger(grams) && grams > 0) {
+            weight = grams / 1000;
+        } else {
+            if (weights === undefined) {
+                try {
+                    weights = JSON.parse(process.env.SHIPGLOBAL_WEIGHTS_KG || "{}");
+                    if (typeof weights === "number") {
+                        if (!Number.isFinite(weights) || weights <= 0) throw new Error();
+                    } else if (!weights || Array.isArray(weights) || typeof weights !== "object") {
+                        throw new Error();
+                    }
+                } catch {
+                    throw new ShippingError("International shipping weights are not configured", 503);
+                }
+            }
+            weight = typeof weights === "number" ? weights : weights![item.sku];
+        }
         if (typeof weight !== "number" || !Number.isFinite(weight) || weight <= 0) {
             throw new ShippingError("International shipping is not configured for one or more items. Please contact the store.", 503);
         }

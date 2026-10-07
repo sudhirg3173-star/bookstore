@@ -196,15 +196,18 @@ SHIPGLOBAL_PASSWORD=your-shipglobal-account-password
 SHIPGLOBAL_WEIGHTS_KG=0.5
 ```
 
-For now, a positive numeric `SHIPGLOBAL_WEIGHTS_KG` sets one packed unit weight
-in KG for every physical book and standard, including its share of packaging.
-The example `0.5` means 0.5 KG per item, so three physical items weigh 1.5 KG.
-PDFs are excluded and quantities multiply the unit weight. The combined parcel
-weight rounds up to the nearest gram. A shared default is an estimate: select a
-suitable value for your catalogue and verify actual packed weights before relying
-on these quotes in production.
+Physical books and standards use their catalogue `Weights_in_Gram` column first.
+Control Center displays and edits this column as non-negative whole grams; blank
+or zero values use the environment fallback. CSV uploads enforce the same rule
+and also recognize the attachment header `Weight_in_Grams`.
 
-When per-item weights are available, the same variable also accepts a JSON object:
+A positive numeric `SHIPGLOBAL_WEIGHTS_KG` sets the fallback unit weight in KG
+only for physical items without a positive catalogue weight. The example `0.5`
+means 0.5 KG per missing-weight item. PDFs are excluded, quantities multiply unit
+weights, and the combined parcel weight rounds up to the nearest gram. Verify
+actual packed weights before relying on these quotes in production.
+
+The fallback variable also accepts a JSON object:
 
 ```dotenv
 SHIPGLOBAL_WEIGHTS_KG='{"9781234567890":0.65,"std-example-standard":0.4}'
@@ -212,8 +215,10 @@ SHIPGLOBAL_WEIGHTS_KG='{"9781234567890":0.65,"std-example-standard":0.4}'
 
 Replace the example SKUs and weights with measured values. Book SKUs are ISBNs;
 physical standard SKUs are `std-<standardSlug>`. In JSON-object mode, every physical
-SKU in the order must have a positive numeric weight. Invalid weight configuration,
-missing credentials, unavailable services or provider errors block international
+SKU without a catalogue weight must have a positive numeric fallback weight.
+The fallback configuration is not needed when all physical items have catalogue
+weights. Invalid required fallback configuration, missing credentials,
+unavailable services or provider errors block international
 payment. Restart after changing the environment value. Do not prefix these
 variables with `NEXT_PUBLIC_` or commit real credentials.
 

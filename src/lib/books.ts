@@ -1,3 +1,4 @@
+import { parseWeightInGrams } from "@/lib/catalogueWeights";
 import fs from "fs";
 import path from "path";
 import { Book } from "@/types/book";
@@ -189,6 +190,7 @@ export function getAllBooks(): Book[] {
                 currency: row["currency"] || "INR",
                 availability: row["availability"] === "Out of Stock" ? "Out of Stock" : "In Stock",
                 pages: parseInt(row["pages"] || "0", 10),
+                weightsInGram: parseWeightInGrams(row["weights_in_gram"]),
                 publicationYear: parseInt(row["publication_year"] || "0", 10),
                 category: row["category"] || "",
                 // HTTP URLs: show no image (fallback) while background download runs.

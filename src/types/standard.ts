@@ -2,6 +2,7 @@ export interface Standard {
     number: string;       // e.g. "APQP-3 : 2024"
     name: string;
     year: number;
+    weightsInGram?: number;
     publisher: string;
     price: number;        // paperback price
     pdfPrice?: number;    // PDF edition price; undefined/0 falls back to `price`

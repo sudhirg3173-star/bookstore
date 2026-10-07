@@ -76,7 +76,112 @@ async function loadModule(relativePath, dependencies, runtimeProcess = process) 
 }
 
 const shippingRules = await loadModule("../src/lib/shippingRules.ts", {});
-const shipglobal = await loadModule("../src/lib/shipglobal.ts", { "@/lib/shippingRules": shippingRules });
+const catalogueWeights = await loadModule("../src/lib/catalogueWeights.ts", {});
+
+test("admin catalogue create and update reject fractional weights and preserve blank or whole weights", async () => {
+    for (const kind of ["books", "standards"]) {
+        for (const operation of ["create", "update"]) {
+            let savedRows;
+            let invalidations = 0;
+            const dependencies = {
+                "@/lib/catalogueWeights": catalogueWeights,
+                "@/lib/adminCsv": {
+                    BOOKS_CSV_PATH: "books.csv", STANDARDS_CSV_PATH: "standards.csv",
+                    readCSV: () => ({ headers: ["Title", "Weights_in_Gram"], rows: [{ Title: "Original", Weights_in_Gram: "500" }] }),
+                    writeCSV: (_path, _headers, rows) => { savedRows = rows; },
+                },
+                "@/lib/books": { invalidateBooksCache: () => { invalidations++; } },
+                "@/lib/standards": { invalidateStandardsCache: () => { invalidations++; } },
+            };
+            const route = await loadModule(`../src/app/api/admin/${kind}/${operation === "update" ? "[id]/" : ""}route.ts`, dependencies);
+            const handler = operation === "update" ? route.PUT : route.POST;
+            for (const weight of ["2.5", "-10", "abc", "1e3", null, 2.5]) {
+                const response = await handler({ json: async () => ({ Weights_in_Gram: weight }) }, { params: Promise.resolve({ id: "0" }) });
+                assert.equal(response.status, 400);
+                assert.equal(savedRows, undefined);
+                assert.equal(invalidations, 0);
+            }
+            for (const weight of ["3000", "", undefined]) {
+                const response = await handler({ json: async () => weight === undefined ? {} : { Weights_in_Gram: weight } }, { params: Promise.resolve({ id: "0" }) });
+                assert.equal(response.status, 200);
+                assert.equal(savedRows[operation === "update" ? 0 : 1].Weights_in_Gram, weight ?? (operation === "update" ? "500" : ""));
+            }
+            assert.equal(invalidations, 3);
+        }
+    }
+});
+
+test("admin CSV upload validates whole weights and recognizes attachment header aliases", async () => {
+    let writes = 0;
+    const route = await loadModule("../src/app/api/admin/upload-csv/route.ts", {
+        "@/lib/catalogueWeights": catalogueWeights,
+        "@/lib/adminCsv": {
+            BOOKS_CSV_PATH: "books.csv", STANDARDS_CSV_PATH: "standards.csv",
+            readCSV: () => ({ headers: ["ISBN", "Weights_in_Gram"], rows: [{ ISBN: "123", Weights_in_Gram: "500" }] }),
+            writeCSV: () => { writes++; },
+        },
+        "@/lib/books": { invalidateBooksCache: () => { } },
+        "@/lib/standards": { invalidateStandardsCache: () => { } },
+    });
+    for (const header of ["Weights_in_Gram", "Weight_in_Grams"]) {
+        for (const weight of ["250", "", "2.5", "-1", "abc"]) {
+            const form = new FormData();
+            form.set("file", new Blob([`ISBN,${header}\n123,${weight}`], { type: "text/csv" }), "weights.csv");
+            form.set("type", "books");
+            const response = await route.POST({ formData: async () => form });
+            const valid = weight === "" || weight === "250";
+            assert.equal(response.status, valid ? 200 : 400);
+            if (valid) assert.ok((await response.json()).differences.matchingFields.includes("Weights_in_Gram"));
+        }
+    }
+    assert.equal(writes, 0);
+});
+
+test("catalogue weights accept only safe non-negative whole numbers or missing values", () => {
+    for (const value of [undefined, "", "0", "250", "3000", 500]) {
+        assert.equal(catalogueWeights.isValidWeightInGrams(value), true);
+    }
+    for (const value of ["1.5", 1.5, "-1", "1e3", "abc", " 500 ", null, true, "9007199254740992"]) {
+        assert.equal(catalogueWeights.isValidWeightInGrams(value), false);
+    }
+    assert.equal(catalogueWeights.parseWeightInGrams("250"), 250);
+    for (const value of ["", undefined, "0", "1.5"]) assert.equal(catalogueWeights.parseWeightInGrams(value), undefined);
+});
+
+const shipglobal = await loadModule("../src/lib/shipglobal.ts", {
+    "@/lib/shippingRules": shippingRules,
+    "@/lib/books": { getBookBySku: (sku) => sku === "weighted-book" ? { weightsInGram: 250 } : undefined },
+    "@/lib/standards": { getStandardBySlug: (slug) => slug === "weighted-standard" ? { weightsInGram: 3000 } : undefined },
+});
+
+test("ShipGlobal prefers catalogue grams and only loads fallback for missing weights", async () => {
+    const previousEnv = { ...process.env };
+    const previousFetch = globalThis.fetch;
+    try {
+        process.env.SHIPGLOBAL_EMAIL = "merchant@example.com";
+        process.env.SHIPGLOBAL_PASSWORD = "test-password";
+        globalThis.fetch = async () => Response.json({ success: true, currency: "INR", services: [{ title: "Direct", subtotal_fee: 300 }] });
+        for (const fallback of [undefined, "invalid", "99"]) {
+            if (fallback === undefined) delete process.env.SHIPGLOBAL_WEIGHTS_KG;
+            else process.env.SHIPGLOBAL_WEIGHTS_KG = fallback;
+            const quote = await shipglobal.getShippingQuote([
+                { sku: "weighted-book", quantity: 2 }, { sku: "std-weighted-standard", quantity: 2 },
+                { sku: "std-weighted-standard-pdf", quantity: 10 },
+            ], "GB", "AB32");
+            assert.equal(quote.packageWeightKg, 6.5);
+        }
+        for (const fallback of ["0.5", '{"unknown":0.5}']) {
+            process.env.SHIPGLOBAL_WEIGHTS_KG = fallback;
+            const quote = await shipglobal.getShippingQuote([
+                { sku: "weighted-book", quantity: 2 }, { sku: "unknown", quantity: 3 },
+            ], "GB", "AB32");
+            assert.equal(quote.packageWeightKg, 2);
+        }
+    } finally {
+        process.env = previousEnv;
+        globalThis.fetch = previousFetch;
+    }
+});
 
 test("ShipGlobal uses server weights, Basic auth, KG and subtotal fees", async () => {
     const previousEnv = { ...process.env };

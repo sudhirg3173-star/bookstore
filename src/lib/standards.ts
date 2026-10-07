@@ -1,3 +1,4 @@
+import { parseWeightInGrams } from "@/lib/catalogueWeights";
 import fs from "fs";
 import path from "path";
 import { Standard } from "@/types/standard";
@@ -144,6 +145,7 @@ export function getAllStandards(): Standard[] {
                 number,
                 name: row["standard_name"] || "",
                 year: parseInt(row["year"] || "0", 10),
+                weightsInGram: parseWeightInGrams(row["weights_in_gram"]),
                 publisher: row["publisher"] || "",
                 price,
                 pdfPrice,

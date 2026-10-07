@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { STANDARDS_CSV_PATH, readCSV, writeCSV } from "@/lib/adminCsv";
 import { invalidateStandardsCache } from "@/lib/standards";
+import { isValidWeightInGrams } from "@/lib/catalogueWeights";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +28,9 @@ export function GET() {
 export async function POST(req: NextRequest) {
     try {
         const body: Record<string, string> = await req.json();
+        if (!isValidWeightInGrams(body["Weights_in_Gram"])) {
+            return NextResponse.json({ error: "Weights_in_Gram must be a non-negative whole number or blank" }, { status: 400 });
+        }
         body["Updated_At"] = new Date().toISOString();
         const { headers, rows } = readCSV(STANDARDS_CSV_PATH);
         const merged = mergeHeaders(headers, body);

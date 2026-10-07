@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { BOOKS_CSV_PATH, readCSV, writeCSV } from "@/lib/adminCsv";
 import { invalidateBooksCache } from "@/lib/books";
+import { isValidWeightInGrams } from "@/lib/catalogueWeights";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     const index = parseInt(id, 10);
     try {
         const body: Record<string, string> = await req.json();
+        if (!isValidWeightInGrams(body["Weights_in_Gram"])) {
+            return NextResponse.json({ error: "Weights_in_Gram must be a non-negative whole number or blank" }, { status: 400 });
+        }
         body["Updated_At"] = new Date().toISOString();
         const { headers, rows } = readCSV(BOOKS_CSV_PATH);
         if (isNaN(index) || index < 0 || index >= rows.length) {

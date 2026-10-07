@@ -7,6 +7,7 @@ export interface Book {
     currency: string;
     availability: "In Stock" | "Out of Stock";
     pages: number;
+    weightsInGram?: number;
     publicationYear: number;
     category: string;
     imageUrl: string;

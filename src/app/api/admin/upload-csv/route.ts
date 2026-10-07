@@ -4,6 +4,7 @@ import path from "path";
 import { BOOKS_CSV_PATH, STANDARDS_CSV_PATH, readCSV, writeCSV } from "@/lib/adminCsv";
 import { invalidateBooksCache } from "@/lib/books";
 import { invalidateStandardsCache } from "@/lib/standards";
+import { isValidWeightInGrams } from "@/lib/catalogueWeights";
 
 export const dynamic = "force-dynamic";
 
@@ -120,7 +121,10 @@ async function downloadImage(
 
 // ── Header normalisation helper ───────────────────────────────────────────────
 
-const normalise = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, "");
+const normalise = (h: string) => {
+    const key = h.toLowerCase().replace(/[^a-z0-9]/g, "");
+    return key === "weightingrams" ? "weightsingram" : key;
+};
 
 // ── Route handler ─────────────────────────────────────────────────────────────
 
@@ -181,6 +185,13 @@ export async function POST(req: NextRequest) {
         matchingFields.forEach(mh => {
             fieldMap[mh] = uploadNorm.get(normalise(mh))!;
         });
+
+        const weightField = uploadNorm.get("weightsingram");
+        const invalidWeightRow = weightField
+            ? uploadRows.findIndex((row) => !isValidWeightInGrams(row[weightField])) : -1;
+        if (invalidWeightRow >= 0) {
+            return NextResponse.json({ error: `Weights_in_Gram must be a non-negative whole number or blank (CSV row ${invalidWeightRow + 2})` }, { status: 400 });
+        }
 
         const hasDupKey = matchingFields.includes(dupKey);
 

@@ -32,6 +32,7 @@ const BOOK_LABELS: Record<string, string> = {
     Price: "Price",
     Discount: "Discount (%)",
     Pages: "Pages",
+    Weights_in_Gram: "Weight (g)",
     Publication_Year: "Publication Year",
     Category: "Category",
     Image_URL: "Image URL",
@@ -50,6 +51,7 @@ const STANDARD_LABELS: Record<string, string> = {
     Currency: "Currency",
     Price: "Price (Paperback)",
     PDF_Price: "Price (PDF)",
+    Weights_in_Gram: "Weight (g)",
     Discount: "Discount (%)",
     Image_URL: "Image URL",
     Description: "Description",
@@ -57,8 +59,8 @@ const STANDARD_LABELS: Record<string, string> = {
     Updated_At: "Updated",
 };
 
-const BOOK_TABLE_COLS = ["Title", "Author", "Subject", "Category", "Currency", "Price", "Publication_Year", "Visible", "Updated_At"];
-const STANDARD_TABLE_COLS = ["Standard Number", "Standard Name", "PUBLISHER", "YEAR", "Currency", "Price", "PDF_Price", "Visible", "Updated_At"];
+const BOOK_TABLE_COLS = ["Title", "Author", "Subject", "Category", "Currency", "Price", "Weights_in_Gram", "Publication_Year", "Visible", "Updated_At"];
+const STANDARD_TABLE_COLS = ["Standard Number", "Standard Name", "PUBLISHER", "YEAR", "Currency", "Price", "PDF_Price", "Weights_in_Gram", "Visible", "Updated_At"];
 
 // All table columns are sortable
 const SORTABLE_BOOK_COLS = new Set(BOOK_TABLE_COLS);
@@ -366,6 +368,17 @@ function Modal({
                                         value={form[h] ?? ""}
                                         onChange={(v) => setForm((f) => ({ ...f, [h]: v }))}
                                         placeholder={`— select ${labels[h] ?? h} —`}
+                                    />
+                                ) : h === "Weights_in_Gram" ? (
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
+                                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        value={form[h] ?? ""}
+                                        onChange={(e) => {
+                                            if (/^\d*$/.test(e.target.value)) setForm((f) => ({ ...f, [h]: e.target.value }));
+                                        }}
                                     />
                                 ) : h === "Price" || h === "PDF_Price" ? (
                                     <input
@@ -953,7 +966,7 @@ export default function ControlCenterClient() {
         return [...rows].sort((a, b) => {
             const va = a[sortCol] ?? "";
             const vb = b[sortCol] ?? "";
-            const cmp = va.localeCompare(vb);
+            const cmp = sortCol === "Weights_in_Gram" ? Number(va) - Number(vb) : va.localeCompare(vb);
             return sortDir === "asc" ? cmp : -cmp;
         });
     }, [data, search, sortCol, sortDir, tableCols]);
