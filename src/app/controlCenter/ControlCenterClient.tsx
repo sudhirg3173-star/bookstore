@@ -25,6 +25,25 @@ interface ApiResponse {
     rows: Row[];
 }
 
+interface OrderEditorValues {
+    paymentRequestId: string;
+    paymentId: string;
+    amount: string;
+    status: Order["status"];
+    deliveryStatus: DeliveryStatus | "";
+    createdAt: string;
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+    state: string;
+    pincode: string;
+    itemTitle: string;
+    itemSku: string;
+    itemQuantity: string;
+    itemPrice: string;
+}
+
 // ── Friendly label mapping ────────────────────────────────────────────────────
 
 const BOOK_LABELS: Record<string, string> = {
@@ -83,6 +102,80 @@ function formatDateTime(iso: string, fallback: string): string {
 }
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
+
+function OrderEditor({
+    order, saving, onClose, onSave,
+}: {
+    order: Order | null;
+    saving: boolean;
+    onClose: () => void;
+    onSave: (values: OrderEditorValues) => void;
+}) {
+    const date = new Date(order?.createdAt ?? Date.now());
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+    const [values, setValues] = useState<OrderEditorValues>({
+        paymentRequestId: order?.paymentRequestId ?? "",
+        paymentId: order?.paymentId ?? "",
+        amount: String(order?.amount ?? ""),
+        status: order?.status ?? "Pending",
+        deliveryStatus: order?.deliveryStatus ?? "",
+        createdAt: localDate,
+        name: order?.billing?.name ?? "",
+        email: order?.billing?.email ?? "",
+        phone: order?.billing?.phone ?? "",
+        address: order?.billing?.address ?? "",
+        state: order?.billing?.state ?? "",
+        pincode: order?.billing?.pincode ?? "",
+        itemTitle: order?.items?.[0]?.title ?? "",
+        itemSku: order?.items?.[0]?.sku ?? "",
+        itemQuantity: String(order?.items?.[0]?.quantity ?? 1),
+        itemPrice: String(order?.items?.[0]?.price ?? ""),
+    });
+    const update = (field: keyof OrderEditorValues, value: string) => setValues((current) => ({ ...current, [field]: value }));
+    const inputClass = "w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500";
+    const labelClass = "block text-xs font-medium text-gray-600 mb-1";
+
+    return (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+            <form onSubmit={(event) => { event.preventDefault(); onSave(values); }} className="flex max-h-[92vh] w-full max-w-2xl flex-col rounded-xl bg-white shadow-xl">
+                <div className="flex items-center justify-between border-b px-6 py-4">
+                    <h2 className="text-lg font-semibold text-gray-900">{order ? "Modify Order" : "Add Missing Order"}</h2>
+                    <button type="button" onClick={onClose} className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100" aria-label="Close">
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+                <div className="grid gap-4 overflow-y-auto px-6 py-5 sm:grid-cols-2">
+                    {!order && <label><span className={labelClass}>Order reference *</span><input required maxLength={128} value={values.paymentRequestId} onChange={(event) => update("paymentRequestId", event.target.value)} className={inputClass} /></label>}
+                    <label><span className={labelClass}>Payment reference</span><input value={values.paymentId} onChange={(event) => update("paymentId", event.target.value)} className={inputClass} /></label>
+                    <label><span className={labelClass}>Amount (INR) *</span><input required type="number" min="0" step="0.01" value={values.amount} onChange={(event) => update("amount", event.target.value)} className={inputClass} /></label>
+                    <label><span className={labelClass}>Payment status *</span><select value={values.status} onChange={(event) => update("status", event.target.value)} className={inputClass}><option value="Pending">Pending</option><option value="Credit">Paid</option><option value="Failed">Failed</option></select></label>
+                    <label><span className={labelClass}>Delivery status</span><select value={values.deliveryStatus} onChange={(event) => update("deliveryStatus", event.target.value)} className={inputClass}><option value="">Not set</option>{(["Processing", "On hold", "Completed", "Cancelled", "Refunded", "Failed"] as DeliveryStatus[]).map((status) => <option key={status} value={status}>{status}</option>)}</select></label>
+                    <label><span className={labelClass}>Order date *</span><input required type="datetime-local" value={values.createdAt} onChange={(event) => update("createdAt", event.target.value)} className={inputClass} /></label>
+                    <label><span className={labelClass}>Buyer name *</span><input required value={values.name} onChange={(event) => update("name", event.target.value)} className={inputClass} /></label>
+                    <label><span className={labelClass}>Email</span><input type="email" value={values.email} onChange={(event) => update("email", event.target.value)} className={inputClass} /></label>
+                    <label><span className={labelClass}>Phone</span><input value={values.phone} onChange={(event) => update("phone", event.target.value)} className={inputClass} /></label>
+                    <label><span className={labelClass}>State</span><input value={values.state} onChange={(event) => update("state", event.target.value)} className={inputClass} /></label>
+                    <label><span className={labelClass}>Address</span><input value={values.address} onChange={(event) => update("address", event.target.value)} className={inputClass} /></label>
+                    <label><span className={labelClass}>Pincode</span><input value={values.pincode} onChange={(event) => update("pincode", event.target.value)} className={inputClass} /></label>
+                    {!order && <>
+                        <div className="sm:col-span-2 border-t pt-4"><h3 className="text-sm font-semibold text-gray-800">First order item</h3></div>
+                        <label><span className={labelClass}>Item title *</span><input required value={values.itemTitle} onChange={(event) => update("itemTitle", event.target.value)} className={inputClass} /></label>
+                        <label><span className={labelClass}>SKU / ISBN</span><input value={values.itemSku} onChange={(event) => update("itemSku", event.target.value)} className={inputClass} /></label>
+                        <label><span className={labelClass}>Quantity *</span><input required type="number" min="1" step="1" value={values.itemQuantity} onChange={(event) => update("itemQuantity", event.target.value)} className={inputClass} /></label>
+                        <label><span className={labelClass}>Item price (INR) *</span><input required type="number" min="0" step="0.01" value={values.itemPrice} onChange={(event) => update("itemPrice", event.target.value)} className={inputClass} /></label>
+                    </>}
+                </div>
+                <div className="flex justify-end gap-2 border-t bg-gray-50 px-6 py-4">
+                    <button type="button" onClick={onClose} className="rounded-lg border border-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-white">Cancel</button>
+                    <button type="submit" disabled={saving} className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60">
+                        {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                        {order ? "Save changes" : "Add order"}
+                    </button>
+                </div>
+            </form>
+        </div>
+    );
+}
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 
@@ -828,11 +921,11 @@ function CsvUploadModal({
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export default function ControlCenterClient() {
+export default function ControlCenterClient({ initialTab }: { initialTab?: string }) {
     // Fixed fallback date shown for rows that have no Updated_At saved yet
     const defaultTimestamp = useRef("2026-05-10T12:00:00.000Z");
 
-    const [tab, setTab] = useState<Tab>("books");
+    const [tab, setTab] = useState<Tab>(initialTab === "standards" || initialTab === "orders" ? initialTab : "books");
     const [data, setData] = useState<ApiResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
@@ -868,8 +961,19 @@ export default function ControlCenterClient() {
     const [ordersSortDir, setOrdersSortDir] = useState<"asc" | "desc">("desc");
     const [ordersPage, setOrdersPage] = useState(1);
     const [ordersPageSize, setOrdersPageSize] = useState(20);
+    const [orderModMode, setOrderModMode] = useState(false);
+    const [orderEditor, setOrderEditor] = useState<Order | null | undefined>(undefined);
+    const [savingOrder, setSavingOrder] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [updatingDeliveryStatus, setUpdatingDeliveryStatus] = useState(false);
+
+    const selectTab = (nextTab: Tab) => {
+        if (nextTab === tab) return;
+        setTab(nextTab);
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", nextTab);
+        window.history.pushState(null, "", url);
+    };
 
     const apiBase = tab === "books" ? "/api/admin/books" : "/api/admin/standards";
     const labels = tab === "books" ? BOOK_LABELS : STANDARD_LABELS;
@@ -923,6 +1027,18 @@ export default function ControlCenterClient() {
         } finally {
             setOrdersLoading(false);
         }
+    }, []);
+
+    useEffect(() => {
+        const syncUrlState = () => {
+            const params = new URLSearchParams(window.location.search);
+            setOrderModMode(params.has("modord"));
+            const urlTab = params.get("tab");
+            setTab(urlTab === "standards" || urlTab === "orders" ? urlTab : "books");
+        };
+        syncUrlState();
+        window.addEventListener("popstate", syncUrlState);
+        return () => window.removeEventListener("popstate", syncUrlState);
     }, []);
 
     useEffect(() => {
@@ -1015,6 +1131,63 @@ export default function ControlCenterClient() {
     const ordersTotalPages = Math.max(1, Math.ceil(ordersSorted.length / ordersPageSize));
     const ordersCurrentPage = Math.min(ordersPage, ordersTotalPages);
     const ordersPageRows = ordersSorted.slice((ordersCurrentPage - 1) * ordersPageSize, ordersCurrentPage * ordersPageSize);
+
+    const handleSaveOrder = async (values: OrderEditorValues) => {
+        const currentOrder = orderEditor ?? null;
+        const billing = {
+            name: values.name.trim(), email: values.email.trim(), phone: values.phone.trim(),
+            address: values.address.trim(), state: values.state.trim(), pincode: values.pincode.trim(),
+            ...(currentOrder?.billing?.countryCode ? { countryCode: currentOrder.billing.countryCode } : {}),
+        };
+        const payload = {
+            paymentId: values.paymentId.trim(),
+            amount: Number(values.amount),
+            status: values.status,
+            deliveryStatus: values.deliveryStatus || null,
+            createdAt: new Date(values.createdAt).toISOString(),
+            billing,
+            ...(!currentOrder ? {
+                paymentRequestId: values.paymentRequestId.trim(),
+                userId: null,
+                items: [{
+                    title: values.itemTitle.trim(), authors: "", sku: values.itemSku.trim(),
+                    quantity: Number(values.itemQuantity), price: Number(values.itemPrice), currency: "INR", imageUrl: "",
+                }],
+            } : {}),
+        };
+
+        setSavingOrder(true);
+        try {
+            const response = await fetch(currentOrder?.id ? `/api/admin/orders/${encodeURIComponent(currentOrder.id)}` : "/api/admin/orders", {
+                method: currentOrder?.id ? "PUT" : "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || "Failed to save order");
+            setOrderEditor(undefined);
+            setToast({ message: currentOrder ? "Order updated" : "Missing order added", type: "success" });
+            await fetchOrders();
+        } catch (error) {
+            setToast({ message: error instanceof Error ? error.message : "Failed to save order", type: "error" });
+        } finally {
+            setSavingOrder(false);
+        }
+    };
+
+    const handleDeleteOrder = async (order: Order) => {
+        if (!order.id || !window.confirm(`Delete order ${order.paymentRequestId}? This cannot be undone.`)) return;
+        try {
+            const response = await fetch(`/api/admin/orders/${encodeURIComponent(order.id)}`, { method: "DELETE" });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || "Failed to delete order");
+            setOrders((current) => current.filter((entry) => entry.id !== order.id));
+            if (selectedOrder?.id === order.id) setSelectedOrder(null);
+            setToast({ message: "Order deleted", type: "success" });
+        } catch (error) {
+            setToast({ message: error instanceof Error ? error.message : "Failed to delete order", type: "error" });
+        }
+    };
 
     // ── Save (create / update) ───────────────────────────────────────────────
 
@@ -1125,7 +1298,7 @@ export default function ControlCenterClient() {
                     {(["books", "standards"] as Tab[]).map((t) => (
                         <button
                             key={t}
-                            onClick={() => setTab(t)}
+                            onClick={() => selectTab(t)}
                             className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all
                                 ${tab === t
                                     ? "bg-blue-600 text-white shadow"
@@ -1136,7 +1309,7 @@ export default function ControlCenterClient() {
                         </button>
                     ))}
                     <button
-                        onClick={() => setTab("orders")}
+                        onClick={() => selectTab("orders")}
                         className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all
                             ${tab === "orders"
                                 ? "bg-blue-600 text-white shadow"
@@ -1167,6 +1340,14 @@ export default function ControlCenterClient() {
                                 />
                             </div>
                             <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                                {orderModMode && (
+                                    <button
+                                        onClick={() => setOrderEditor(null)}
+                                        className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
+                                    >
+                                        <Plus className="w-4 h-4" /> Add missing order
+                                    </button>
+                                )}
                                 <select
                                     value={ordersMonth}
                                     onChange={(e) => { setOrdersMonth(e.target.value); setOrdersPage(1); }}
@@ -1307,12 +1488,28 @@ export default function ControlCenterClient() {
                                                             )}
                                                         </td>
                                                         <td className="px-4 py-3 text-right">
-                                                            <button
-                                                                onClick={() => setSelectedOrder(order)}
-                                                                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-                                                            >
-                                                                <Info className="w-3.5 h-3.5" /> Details
-                                                            </button>
+                                                            <div className="flex items-center justify-end gap-1.5">
+                                                                <button
+                                                                    onClick={() => setSelectedOrder(order)}
+                                                                    className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+                                                                >
+                                                                    <Info className="w-3.5 h-3.5" /> Details
+                                                                </button>
+                                                                {orderModMode && <>
+                                                                    <button
+                                                                        onClick={() => setOrderEditor(order)}
+                                                                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                                                                    >
+                                                                        <Pencil className="w-3.5 h-3.5" /> Modify
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => handleDeleteOrder(order)}
+                                                                        className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                                                                    >
+                                                                        <Trash2 className="w-3.5 h-3.5" /> Delete
+                                                                    </button>
+                                                                </>}
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -1731,6 +1928,16 @@ export default function ControlCenterClient() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {orderEditor !== undefined && (
+                <OrderEditor
+                    key={orderEditor?.id ?? "new-order"}
+                    order={orderEditor}
+                    saving={savingOrder}
+                    onClose={() => setOrderEditor(undefined)}
+                    onSave={handleSaveOrder}
+                />
             )}
 
             {/* Toast */}

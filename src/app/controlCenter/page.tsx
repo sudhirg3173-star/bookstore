@@ -5,6 +5,6 @@ export const metadata = {
     description: "Manage books and standards catalogue",
 };
 
-export default function ControlCenterPage() {
-    return <ControlCenterClient />;
+export default function ControlCenterPage({ searchParams }: { searchParams: { tab?: string } }) {
+    return <ControlCenterClient initialTab={searchParams.tab} />;
 }
