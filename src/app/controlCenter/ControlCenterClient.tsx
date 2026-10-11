@@ -16,6 +16,10 @@ import { Order, DeliveryStatus } from "@/types/order";
 type Tab = "books" | "standards" | "orders";
 type Row = Record<string, string> & { _index: number };
 
+function formatOrderAmount(amount: unknown): string {
+    return typeof amount === "number" && Number.isFinite(amount) ? `₹${amount.toFixed(2)}` : "—";
+}
+
 interface ApiResponse {
     headers: string[];
     rows: Row[];
@@ -1281,7 +1285,7 @@ export default function ControlCenterClient() {
                                                             </div>
                                                         </td>
                                                         <td className="px-4 py-3 text-sm font-bold text-gray-800 whitespace-nowrap">
-                                                            ₹{order.amount.toFixed(2)}
+                                                            {formatOrderAmount(order.amount)}
                                                         </td>
                                                         <td className="px-4 py-3">
                                                             <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${order.status === "Credit" ? "bg-green-100 text-green-700" : order.status === "Failed" ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-700"}`}>
@@ -1333,7 +1337,22 @@ export default function ControlCenterClient() {
                                                 className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-40 transition-colors">
                                                 <ChevronLeft className="w-4 h-4" />
                                             </button>
-                                            <span className="px-2 font-medium text-gray-700">{ordersCurrentPage} / {ordersTotalPages}</span>
+                                            {Array.from({ length: ordersTotalPages }, (_, i) => i + 1)
+                                                .filter((pageNumber) => pageNumber === 1 || pageNumber === ordersTotalPages || Math.abs(pageNumber - ordersCurrentPage) <= 1)
+                                                .reduce<(number | "…")[]>((pages, pageNumber, index, visiblePages) => {
+                                                    if (index > 0 && pageNumber - visiblePages[index - 1] > 1) pages.push("…");
+                                                    pages.push(pageNumber);
+                                                    return pages;
+                                                }, [])
+                                                .map((pageNumber, index) => pageNumber === "…" ? (
+                                                    <span key={`orders-ellipsis-${index}`} className="px-1 text-gray-400 text-sm">…</span>
+                                                ) : (
+                                                    <button key={pageNumber} onClick={() => setOrdersPage(pageNumber)}
+                                                        aria-current={ordersCurrentPage === pageNumber ? "page" : undefined}
+                                                        className={`w-8 h-8 text-xs rounded-lg transition-colors ${ordersCurrentPage === pageNumber ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-200"}`}>
+                                                        {pageNumber}
+                                                    </button>
+                                                ))}
                                             <button onClick={() => setOrdersPage((p) => Math.min(ordersTotalPages, p + 1))} disabled={ordersCurrentPage === ordersTotalPages}
                                                 className="p-1.5 rounded-lg hover:bg-gray-200 disabled:opacity-40 transition-colors">
                                                 <ChevronRight className="w-4 h-4" />
@@ -1557,7 +1576,7 @@ export default function ControlCenterClient() {
                                     </div>
                                     <div>
                                         <dt className="text-gray-500">Amount</dt>
-                                        <dd className="font-bold text-gray-900">₹{selectedOrder.amount.toFixed(2)}</dd>
+                                        <dd className="font-bold text-gray-900">{formatOrderAmount(selectedOrder.amount)}</dd>
                                     </div>
                                     <div className="col-span-2">
                                         <dt className="text-gray-500">Payment Reference</dt>
