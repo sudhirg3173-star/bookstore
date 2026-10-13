@@ -101,13 +101,32 @@ export default function Footer({ subjects: _subjects }: { subjects: string[] }) 
                     <ul className="space-y-2.5 text-sm text-gray-400">
                         <li>📍 Mumbai, Maharashtra, India</li>
                         <li>
-                            <a href="tel:+919821161908" className="hover:text-primary transition-colors">
-                                📞 +91 98211 61908
+                            <a href="mailto:info@kabdwalbook.com" className="hover:text-primary transition-colors">
+                                🛒 info@kabdwalbook.com
+                            </a> (Standards)
+                        </li>
+                        <li>
+                            <a href="tel:+7700987586" className="hover:text-primary transition-colors">
+                                📞 +91 77009 87586
                             </a>
                         </li>
                         <li>
                             <a href="mailto:order@kabdwalbook.com" className="hover:text-primary transition-colors">
                                 🛒 order@kabdwalbook.com
+                            </a> (Books)
+                        </li>
+                        <li>
+                            <a href="tel:+919136669388" className="hover:text-primary transition-colors">
+                                📞 +91 91366 69388
+                            </a>
+                        </li>
+                        <li><a href="mailto:rajesh.raheja@kabdwalbook.com" className="hover:text-primary transition-colors">
+                                🛒 rajesh.raheja@kabdwalbook.com
+                            </a> (Publishing)
+                        </li>
+                        <li>
+                            <a href="tel:+919821161908" className="hover:text-primary transition-colors">
+                                📞 +91 98211 61908
                             </a>
                         </li>
                         <li>🏢 Founded in 2003</li>
