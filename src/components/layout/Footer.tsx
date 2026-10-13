@@ -122,10 +122,7 @@ export default function Footer({ subjects: _subjects }: { subjects: string[] }) 
                         </li>
                         <li><a href="mailto:rajesh.raheja@kabdwalbook.com" className="hover:text-primary transition-colors">
                                 🛒 rajesh.raheja@kabdwalbook.com
-                            </a> (Publishing)
-                        </li>
-                        <li>
-                            <a href="tel:+919821161908" className="hover:text-primary transition-colors">
+                            </a> (Publishing) <a href="tel:+919821161908" className="hover:text-primary transition-colors">
                                 📞 +91 98211 61908
                             </a>
                         </li>
