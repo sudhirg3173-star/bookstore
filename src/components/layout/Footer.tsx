@@ -103,14 +103,20 @@ export default function Footer({ subjects: _subjects }: { subjects: string[] }) 
                         <li>
                             <a href="mailto:info@kabdwalbook.com" className="hover:text-primary transition-colors">
                                 🛒 info@kabdwalbook.com
-                            </a> (Standards) <a href="tel:+7700987586" className="hover:text-primary transition-colors">
+                            </a> (Standards) 
+                        </li>
+                        <li>
+                            <a href="tel:+7700987586" className="hover:text-primary transition-colors">
                                 📞 +91 77009 87586
                             </a>
                         </li>
                         <li>
                             <a href="mailto:order@kabdwalbook.com" className="hover:text-primary transition-colors">
                                 🛒 order@kabdwalbook.com
-                            </a> (Books) <a href="tel:+919136669388" className="hover:text-primary transition-colors">
+                            </a> (Books)
+                        </li>
+                        <li>
+                            <a href="tel:+919136669388" className="hover:text-primary transition-colors">
                                 📞 +91 91366 69388
                             </a>
                         </li>
