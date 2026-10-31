@@ -12,11 +12,11 @@ const slides = [
         headline: "Bestselling\n Books",
         subtext: "Discover title of the month",
         cta: "Order Now",
-        href: "https://www.kabdwalbook.com/rewired-mckinseys-playbook-on-how-leading-companies-win-with-technology-and-ai-2nd-edition/eric-lamarre_kate-smaje_robert-levin_alex-singla_alexander-sukharevsky/9781394381906",
+        href: "https://www.kabdwalbook.com/marketing-70-a-guide-for-thinking-marketers-in-the-age-of-ai/kotler/9781394329861",
         gradient: "from-[#001329] via-[#001329] to-[#001329]",
         accent: "text-amber-400",
         bookEmoji: "",
-        image: "/images/banner/banner4.webp",
+        image: "/images/banner/banner5.webp",
     },
     {
         id: 2,
